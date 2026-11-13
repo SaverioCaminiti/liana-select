@@ -56,7 +56,8 @@ Discuss these before building on them:
 - Anything about the interaction that `docs/interaction-design.md` does not state.
 - Public API beyond what that document fixes: names of further attributes,
   properties, events and CSS custom properties.
-- License (a MIT `LICENSE` file exists, but it is not confirmed), publishing and CI.
+- License (a MIT `LICENSE` file exists, but it is not confirmed), publishing to a
+  registry, and CI for tests and lint.
 
 ## Conventions
 
@@ -83,10 +84,13 @@ Discuss these before building on them:
 - `pnpm typecheck`: type-check core (no DOM), element and demo, and tooling files.
 - `pnpm lint`: run ESLint.
 - `pnpm format` / `pnpm format:check`: run Prettier.
+- `pnpm site:dev` / `pnpm site:build` / `pnpm site:preview`: the documentation
+  site in `site/`, built into `dist-site/`. Unlike the library build it bundles
+  Lit, so the examples run as they are.
 
 ## Current status
 
-Version 1.0.0 is released: the interaction designed in
+Version 1.1.0 is released: the interaction designed in
 `docs/interaction-design.md` is implemented.
 
 - `src/core`: `tree.ts` (model), `navigation.ts` (selected path and highlight),
@@ -95,7 +99,12 @@ Version 1.0.0 is released: the interaction designed in
   that composes them).
 - `src/element`: `liana-select.ts` (form-associated Lit element), the data
   elements `liana-group.ts` and `liana-option.ts`, and `read-tree.ts`.
-- `demo/`: a restaurant menu in several configurations.
+- `demo/`: a restaurant menu in several configurations, for development. Its
+  menu data lives in `demo/menu.ts`, shared with the site.
+- `site/`: the documentation site published on GitHub Pages by
+  `.github/workflows/pages.yml` on every push to `main`, that is on every
+  release. Each example shows the exact code it runs: keep it that way, and
+  update the site when the public API changes.
 
 Next steps: the owner reviews the "Choices made while implementing" section of
 the design document and tries the gesture on a real touch device. Then keyboard

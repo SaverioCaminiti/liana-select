@@ -1,0 +1,248 @@
+:root {
+  color-scheme: light dark;
+  --accent: light-dark(#1f7a3f, #6fd08c);
+  --muted: light-dark(#5b6470, #a3acb8);
+  --surface: light-dark(#f5f6f4, #1d2022);
+  --line: light-dark(#d9ddd6, #353a3d);
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+  line-height: 1.55;
+}
+
+body {
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  max-width: 58rem;
+  background: light-dark(#ffffff, #141617);
+  color: light-dark(#1b1f23, #e6e8ea);
+}
+
+a {
+  color: var(--accent);
+}
+
+code {
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.9em;
+}
+
+/* Header */
+
+.page-header {
+  padding-block: 1.5rem 1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0.1rem 0 0;
+  font-size: clamp(2.2rem, 7vw, 3.4rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.tagline {
+  margin: 0.5rem 0 1.25rem;
+  max-width: 34rem;
+  color: var(--muted);
+  font-size: 1.15rem;
+}
+
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  font-weight: 500;
+}
+
+nav a {
+  text-decoration: none;
+}
+
+nav a:hover {
+  text-decoration: underline;
+}
+
+/* Sections */
+
+section {
+  margin-top: 3rem;
+  scroll-margin-top: 1rem;
+}
+
+h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.6rem;
+  letter-spacing: -0.01em;
+}
+
+h3 {
+  margin: 2rem 0 0.4rem;
+  font-size: 1.15rem;
+}
+
+section > p,
+section > ul,
+.example > p {
+  max-width: 44rem;
+}
+
+.features {
+  padding-left: 1.2rem;
+}
+
+.features li {
+  margin-block: 0.4rem;
+}
+
+.note {
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--accent);
+  background: var(--surface);
+  border-radius: 0 6px 6px 0;
+}
+
+/* Examples */
+
+.example {
+  margin-top: 2.5rem;
+}
+
+.example h3 {
+  margin-top: 0;
+}
+
+.example[data-plain] {
+  margin-top: 1rem;
+}
+
+.example-live {
+  margin-top: 1rem;
+}
+
+liana-select {
+  height: 18rem;
+}
+
+liana-select.tall {
+  height: min(65vh, 28rem);
+}
+
+.example-live p {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin: 0.75rem 0 0;
+}
+
+button {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--accent);
+}
+
+.readout,
+output {
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.9rem;
+}
+
+.readout {
+  color: var(--muted);
+}
+
+.example-code {
+  margin-top: 1rem;
+}
+
+.source {
+  margin: 0.75rem 0 0;
+}
+
+.source figcaption {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.code {
+  margin: 0.25rem 0 0;
+  padding: 0.85rem 1rem;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  tab-size: 2;
+}
+
+section > .code {
+  margin-block: 0.75rem;
+}
+
+/* Reference */
+
+.table-wrap {
+  margin-block: 0.75rem;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+th,
+td {
+  padding: 0.5rem 0.75rem 0.5rem 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+td:first-child,
+td code {
+  white-space: nowrap;
+}
+
+/* Footer */
+
+.page-footer {
+  margin-top: 4rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.9rem;
+}

@@ -3,6 +3,20 @@
 What changed in each release of `liana-select`, newest first. Version numbers
 follow [semantic versioning](https://semver.org/).
 
+## 1.1.0 - 2026-11-13
+
+### Added
+
+- A documentation site with live examples, published on
+  [GitHub Pages](https://saveriocaminiti.github.io/liana-select/) at every
+  release.
+
+### Fixed
+
+- A bundler could drop the registration of `<liana-group>` and
+  `<liana-option>` when building an application, because their modules were not
+  marked as having side effects.
+
 ## 1.0.0 - 2026-11-13
 
 First release.

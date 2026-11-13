@@ -2,6 +2,12 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "site",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["site:dev", "--port", "5175", "--strictPort"],
+      "port": 5175
+    },
+    {
       "name": "demo-lan",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["dev", "--host", "--port", "5173", "--strictPort"],

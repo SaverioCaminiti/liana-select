@@ -17,5 +17,5 @@
     "useDefineForClassFields": false,
     "noEmit": true
   },
-  "include": ["src", "demo"]
+  "include": ["src", "demo", "site"]
 }
