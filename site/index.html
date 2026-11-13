@@ -89,11 +89,17 @@
 
       <section id="start">
         <h2>Getting started</h2>
+        <p>Install the package from npm:</p>
+        <pre class="code"><code>pnpm add liana-select
+# or: npm install liana-select</code></pre>
         <p>
-          Import the package once, anywhere in your page or app. That registers the three
-          elements.
+          Import it once, anywhere in your page or app. That registers the three elements.
         </p>
         <pre class="code"><code>import 'liana-select';</code></pre>
+        <p>Without a build step, load it from a CDN instead:</p>
+        <pre
+          class="code"
+        ><code>&lt;script type="module" src="https://cdn.jsdelivr.net/npm/liana-select@1/+esm"&gt;&lt;/script&gt;</code></pre>
         <p>
           Then declare the tree with nested <code>&lt;liana-group&gt;</code> and
           <code>&lt;liana-option&gt;</code> elements, and give the select a size:
@@ -109,11 +115,12 @@
         <pre class="code"><code>const select = document.querySelector('liana-select');
 select.addEventListener('change', () =&gt; console.log(select.value));</code></pre>
         <p class="note">
-          The package is not published to npm yet. Until it is, clone the
-          <a href="https://github.com/SaverioCaminiti/liana-select">repository</a>, run
-          <code>pnpm install</code> and <code>pnpm build</code>, and import
-          <code>dist/liana-select.js</code>. Its only dependency is
-          <a href="https://lit.dev/">Lit</a>.
+          Its only dependency is <a href="https://lit.dev/">Lit</a>. It works in current
+          versions of Chrome, Edge, Firefox and Safari: at least Chrome and Edge 125,
+          Firefox 126 and Safari 17.5. Found a problem, or have an idea?
+          <a href="https://github.com/SaverioCaminiti/liana-select/issues"
+            >Open an issue</a
+          >.
         </p>
       </section>
 

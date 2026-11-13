@@ -25,9 +25,9 @@ gesture. It must be usable in plain HTML and inside any framework.
     `tsconfig.core.json`, which has no DOM lib, and ESLint forbids importing `lit`
     or the element from `src/core`.
 - Tooling: pnpm, Vitest in two projects (`core` in Node with no DOM, `browser` in
-  headless Chromium through Playwright for the element), ESLint flat config with
-  `typescript-eslint` (strict, type-aware), `eslint-plugin-lit`, `eslint-plugin-wc`,
-  and Prettier for formatting.
+  headless Chromium, Firefox and WebKit through Playwright for the element),
+  ESLint flat config with `typescript-eslint` (strict, type-aware),
+  `eslint-plugin-lit`, `eslint-plugin-wc`, and Prettier for formatting.
 - TypeScript is pinned to 6.0 because `typescript-eslint` does not support 7.x yet.
 - Package layout: one package with two entry points, `liana-select` (registers the
   element) and `liana-select/core` (headless core). ESM only; Lit stays external.
@@ -48,6 +48,15 @@ gesture. It must be usable in plain HTML and inside any framework.
 - Default colours come from the browser's focus ring, measured at runtime, so the
   component matches the other inputs of the page.
 
+- License: MIT.
+- Published on npm as `liana-select` (unscoped), with normal versions, not
+  pre-releases. Releases publish it through `.github/workflows/publish.yml`
+  with npm trusted publishing; the first publication is made by hand by the owner.
+- CI: `.github/workflows/ci.yml` checks types, lint and formatting, runs all the
+  tests and both builds on every push and pull request.
+- Supported browsers: current Chrome, Edge, Firefox and Safari; at least Chrome
+  and Edge 125, Firefox 126, Safari 17.5. The element tests run on Chromium,
+  Firefox and WebKit.
 - Theming through CSS custom properties and `::part`. The custom properties are
   listed in `docs/interaction-design.md`, section "Styling".
 
@@ -61,8 +70,6 @@ them.
 - Anything about the interaction that `docs/interaction-design.md` does not state.
 - Public API beyond what that document fixes: names of further attributes,
   properties, events and CSS custom properties.
-- License (a MIT `LICENSE` file exists, but it is not confirmed), publishing to a
-  registry, and CI for tests and lint.
 
 ## Conventions
 
@@ -75,7 +82,8 @@ them.
   version tag prefix. Do not commit directly to `main`.
 - Releases are made with `git flow release`. On the release branch, set the
   version in `package.json` and describe the release in `CHANGES.md`, which lists
-  what changed between one release and the next, newest first.
+  what changed between one release and the next, newest first. The full
+  procedure, publication on npm included, is in `docs/releasing.md`.
 
 ## Commands
 
@@ -84,7 +92,8 @@ them.
 - `pnpm build`: build `dist/` (Vite library build, then `.d.ts` files via `tsc`).
 - `pnpm test` / `pnpm test:watch`: run the core tests, in Node.
 - `pnpm test:browser`: run the element tests (`*.browser.test.ts`) in headless
-  Chromium. Needs `pnpm exec playwright install --only-shell chromium` once.
+  Chromium, Firefox and WebKit. Needs
+  `pnpm exec playwright install chromium firefox webkit` once.
 - `pnpm test:all`: run both.
 - `pnpm typecheck`: type-check core (no DOM), element and demo, and tooling files.
 - `pnpm lint`: run ESLint.

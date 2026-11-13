@@ -12,9 +12,32 @@ with a single gesture.
 
 ## Status
 
-Version 1.2.0: the interaction works with mouse, touch, pen and keyboard, and the
-element is exposed to assistive technology as a tree. The package is not
-published to a registry yet. See [CHANGES.md](CHANGES.md) for the history.
+The interaction works with mouse, touch, pen and keyboard, and the element is
+exposed to assistive technology as a tree. See [CHANGES.md](CHANGES.md) for the
+history, and the [documentation site](https://saveriocaminiti.github.io/liana-select/)
+for live examples. Feedback is welcome in the
+[issues](https://github.com/SaverioCaminiti/liana-select/issues).
+
+## Installation
+
+```sh
+pnpm add liana-select
+# or: npm install liana-select
+```
+
+Its only dependency is [Lit](https://lit.dev/). Without a build step, it can be
+loaded from a CDN that bundles it:
+
+```html
+<script type="module" src="https://cdn.jsdelivr.net/npm/liana-select@1/+esm"></script>
+```
+
+### Browser support
+
+Current versions of Chrome, Edge, Firefox and Safari, on desktop and mobile.
+Because of the CSS and DOM features it relies on, the minimum versions are
+Chrome and Edge 125, Firefox 126 and Safari 17.5. The tests run on the engines
+of all three.
 
 ## Usage
 
@@ -83,17 +106,20 @@ The full behaviour is specified in
 
 ```sh
 pnpm install
-pnpm exec playwright install --only-shell chromium  # once, for the browser tests
+pnpm exec playwright install chromium firefox webkit  # once, for the browser tests
 pnpm dev           # demo page with hot reload
 pnpm site:dev      # documentation site with hot reload
 pnpm test          # core tests, in Node
-pnpm test:browser  # element tests, in headless Chromium
+pnpm test:browser  # element tests, in Chromium, Firefox and WebKit
 pnpm typecheck && pnpm lint && pnpm build
 ```
 
 The code is split in two: a headless core in `src/core` (tree, navigation, layout,
 scroll and the gesture state machine, with no DOM) and a thin Lit element in
-`src/element` that measures, forwards pointer events and draws.
+`src/element` that measures, forwards pointer and key events and draws.
+
+Releases and publication on npm are described in
+[docs/releasing.md](docs/releasing.md).
 
 ## Tech stack
 
