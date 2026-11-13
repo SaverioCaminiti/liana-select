@@ -16,15 +16,16 @@ follow [semantic versioning](https://semver.org/).
   `<label>`.
 - The focus ring of the browser when the select is reached with the keyboard.
 - `--liana-accent-color`, from which all the colours derive, and
-  `--liana-selected-text-color`.
+  `--liana-highlight-text-color`.
 
 ### Changed
 
-- Default colours: selected items take the colour of the browser's focus ring,
-  with black or white text for contrast, and highlighted items a light tint of
-  it. The green of selected items is gone.
-- While a gesture is in progress, `value` keeps the committed value until the
-  gesture ends, instead of following the path under the pointer.
+- Default colours: the item under the pointer or the cursor takes the colour of
+  the browser's focus ring, with black or white text for contrast, and selected
+  items a light tint of it. The green of selected items is gone.
+- `value` read during a gesture now returns the committed value. Before, it could
+  briefly read as empty while the pointer was on a group. Events and the form
+  value were already updated only at release.
 
 ### Fixed
 

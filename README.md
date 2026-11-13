@@ -70,9 +70,9 @@ dragging on it.
 | `--liana-column-min-width`           | `10rem`      | Minimum width of a column before shrinking             |
 | `--liana-column-collapsed-min-width` | `4rem`       | Minimum width of a shrunk column                       |
 | `--liana-accent-color`               | focus ring   | Base of all the colours, and the focus ring            |
-| `--liana-selected-color`             | accent       | Background of a selected item                          |
-| `--liana-selected-text-color`        | contrast     | Text of a selected item                                |
-| `--liana-highlight-color`            | light accent | Background of the item under the pointer or the cursor |
+| `--liana-highlight-color`            | accent       | Background of the item under the pointer or the cursor |
+| `--liana-highlight-text-color`       | contrast     | Text of the item under the pointer or the cursor       |
+| `--liana-selected-color`             | light accent | Background of a selected item                          |
 
 Columns and items are also exposed as `::part(column)` and `::part(item)`.
 

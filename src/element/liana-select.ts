@@ -70,14 +70,15 @@ function itemId(path: NodePath): string {
  * @cssprop --liana-item-max-height - Maximum height of an item.
  * @cssprop --liana-column-min-width - Minimum width of a column that is not shrunk.
  * @cssprop --liana-column-collapsed-min-width - Minimum width of a shrunk column.
- * @cssprop --liana-accent-color - Base colour of the focus ring, the selected and
- *   the highlighted items. Defaults to the colour of the browser's focus ring.
+ * @cssprop --liana-accent-color - Base colour of the focus ring, the highlighted
+ *   and the selected items. Defaults to the colour of the browser's focus ring.
  * @cssprop --liana-highlight-color - Background of the item under the pointer or
- *   the keyboard cursor. Defaults to a light tint of the accent colour.
- * @cssprop --liana-selected-color - Background of a selected item. Defaults to
- *   the accent colour.
- * @cssprop --liana-selected-text-color - Text of a selected item. Defaults to
- *   black or white, whichever contrasts more with its background.
+ *   the keyboard cursor. Defaults to the accent colour.
+ * @cssprop --liana-highlight-text-color - Text of the item under the pointer or
+ *   the keyboard cursor. Defaults to black or white, whichever contrasts more
+ *   with its background.
+ * @cssprop --liana-selected-color - Background of a selected item. Defaults to a
+ *   light tint of the accent colour.
  */
 @customElement('liana-select')
 export class LianaSelect extends LitElement {
@@ -114,7 +115,7 @@ export class LianaSelect extends LitElement {
       --_liana-divider: color-mix(in srgb, currentColor 15%, transparent);
       /* The system accent is measured at runtime: see #updateTheme. */
       --_liana-accent: var(--liana-accent-color, var(--_liana-system-accent, #0075ff));
-      --_liana-selected: var(--liana-selected-color, var(--_liana-accent));
+      --_liana-highlight: var(--liana-highlight-color, var(--_liana-accent));
     }
 
     /* The same ring as the other inputs of the page, when reached with the keyboard. */
@@ -177,16 +178,17 @@ export class LianaSelect extends LitElement {
       border-top: 1px solid var(--_liana-divider);
     }
 
+    /* The item under the pointer or the cursor stands out the most. */
     .item[data-state='highlighted'] {
-      background: var(
-        --liana-highlight-color,
-        color-mix(in srgb, var(--_liana-accent) 28%, Field)
-      );
+      background: var(--_liana-highlight);
+      color: var(--liana-highlight-text-color, var(--_liana-on-highlight, #fff));
     }
 
     .item[data-state='selected'] {
-      background: var(--_liana-selected);
-      color: var(--liana-selected-text-color, var(--_liana-on-selected, #fff));
+      background: var(
+        --liana-selected-color,
+        color-mix(in srgb, var(--_liana-accent) 28%, Field)
+      );
     }
 
     .label {
@@ -228,9 +230,9 @@ export class LianaSelect extends LitElement {
       outline-color: -webkit-focus-ring-color;
     }
 
-    /* Tells the background of selected items, to pick a text colour for it. */
-    .probe-selected {
-      color: var(--_liana-selected);
+    /* Tells the background of the highlighted item, to pick a text colour for it. */
+    .probe-highlight {
+      color: var(--_liana-highlight);
     }
   `;
 
@@ -267,7 +269,7 @@ export class LianaSelect extends LitElement {
   @query('.probe-min') private _minProbe!: HTMLElement | null;
   @query('.probe-collapsed') private _collapsedProbe!: HTMLElement | null;
   @query('.probe-ring') private _ringProbe!: HTMLElement | null;
-  @query('.probe-selected') private _selectedProbe!: HTMLElement | null;
+  @query('.probe-highlight') private _highlightProbe!: HTMLElement | null;
 
   constructor() {
     super();
@@ -405,7 +407,7 @@ export class LianaSelect extends LitElement {
       <div class="probe probe-min" aria-hidden="true"></div>
       <div class="probe probe-collapsed" aria-hidden="true"></div>
       <div class="probe probe-ring" aria-hidden="true"></div>
-      <div class="probe probe-selected" aria-hidden="true"></div>
+      <div class="probe probe-highlight" aria-hidden="true"></div>
     `;
   }
 
@@ -484,12 +486,12 @@ export class LianaSelect extends LitElement {
   /**
    * Measures the colours that CSS alone cannot provide: the colour of the
    * browser's focus ring, which becomes the default accent, and a text colour
-   * that contrasts with the background of selected items.
+   * that contrasts with the background of the highlighted item.
    */
   #updateTheme(): void {
     const ring = this._ringProbe;
-    const selected = this._selectedProbe;
-    if (ring === null || selected === null) return;
+    const highlight = this._highlightProbe;
+    if (ring === null || highlight === null) return;
 
     let accent = FALLBACK_ACCENT;
     if (CSS.supports('outline-color', '-webkit-focus-ring-color')) {
@@ -501,9 +503,9 @@ export class LianaSelect extends LitElement {
     }
     this.#setThemeRules(`:host { --_liana-system-accent: ${accent}; }`);
 
-    const text = contrastingText(getComputedStyle(selected).color);
+    const text = contrastingText(getComputedStyle(highlight).color);
     this.#setThemeRules(
-      `:host { --_liana-system-accent: ${accent}; --_liana-on-selected: ${text}; }`,
+      `:host { --_liana-system-accent: ${accent}; --_liana-on-highlight: ${text}; }`,
     );
   }
 

@@ -44,10 +44,11 @@ and `<optgroup>` are not used, because nested `<optgroup>` is invalid HTML.
 - **Path**: the chain of items chosen so far, one per column, starting from the
   first column.
 - **Highlighted**: the item under the pointer during a gesture, or under the
-  keyboard cursor. Temporary, like a mouse hover. Shown in a light tint of the
-  accent colour.
+  keyboard cursor. Temporary, like a mouse hover. Shown in the accent colour,
+  with black or white text for contrast: it is where the user is acting, so it
+  stands out the most.
 - **Selected**: an item the user has chosen: they moved past it, released on it,
-  or confirmed it with the keyboard. Shown in the accent colour.
+  or confirmed it with the keyboard. Shown in a light tint of the accent colour.
 - **Accent colour**: by default the colour of the browser's own focus ring, so
   that the component matches the other inputs of the page.
 - **Current column**: where the next choice happens. During a gesture it is the
@@ -265,9 +266,9 @@ the component.
 - `--liana-column-collapsed-min-width` (default `4rem`).
 - `--liana-accent-color` (default: the colour of the browser's focus ring,
   measured at runtime, otherwise `AccentColor`, otherwise a fixed blue).
-- `--liana-selected-color` (default: the accent), `--liana-selected-text-color`
+- `--liana-highlight-color` (default: the accent), `--liana-highlight-text-color`
   (default: black or white, whichever contrasts more) and
-  `--liana-highlight-color` (default: a light tint of the accent).
+  `--liana-selected-color` (default: a light tint of the accent).
 - `::part(column)` and `::part(item)`.
 
 ## Open questions

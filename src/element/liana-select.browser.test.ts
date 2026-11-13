@@ -411,43 +411,69 @@ describe('<liana-select> with the keyboard', () => {
 });
 
 describe('<liana-select> colours', () => {
-  function background(label: string): string {
-    const item = Array.from(select.shadowRoot?.querySelectorAll('.item') ?? []).find(
+  function item(label: string): Element | undefined {
+    return Array.from(select.shadowRoot?.querySelectorAll('.item') ?? []).find(
       (element) => element.textContent.trim() === label,
     );
-    return item === undefined ? '' : getComputedStyle(item).backgroundColor;
   }
 
-  it('uses the colour of the browser focus ring for selected items', async () => {
+  function colours(label: string): { background: string; text: string } {
+    const element = item(label);
+    if (element === undefined) return { background: '', text: '' };
+    const style = getComputedStyle(element);
+    return { background: style.backgroundColor, text: style.color };
+  }
+
+  /** Tabs into the select from the button before it: the cursor is on Pizza. */
+  async function tabIn(): Promise<void> {
+    document.querySelector<HTMLElement>('#before')?.focus();
+    await userEvent.tab();
+    await settled();
+  }
+
+  it('highlights with the colour of the browser focus ring', async () => {
     // The ring of a button reached with the keyboard.
     document.querySelector<HTMLElement>('#before')?.focus();
-    await userEvent.tab({ shift: false });
+    await userEvent.tab();
     await userEvent.tab({ shift: true });
     const focused = document.activeElement;
     if (focused === null) throw new Error('Nothing is focused');
+    expect(focused.id).toBe('before');
     const ring = getComputedStyle(focused).outlineColor;
-    expect(document.activeElement?.id).toBe('before');
 
-    await tap(150, 50);
-    expect(background('Pizza')).toBe(ring);
-    expect(getComputedStyle(select).outlineColor).not.toBe('');
+    await userEvent.tab();
+    await settled();
+    expect(path()).toEqual(['Pizza?', '-']);
+    expect(colours('Pizza').background).toBe(ring);
+    expect(getComputedStyle(select).outlineColor).toBe(ring);
   });
 
-  it('can be themed from one accent colour, with readable text', async () => {
-    select.style.setProperty('--liana-accent-color', 'rgb(20, 20, 120)');
+  it('shows selected items in a lighter tint of the same colour', async () => {
+    select.style.setProperty('--liana-accent-color', 'rgb(0, 0, 200)');
     await tap(150, 50);
-    const pizza = Array.from(select.shadowRoot?.querySelectorAll('.item') ?? []).find(
-      (element) => element.textContent.trim() === 'Pizza',
-    );
-    expect(background('Pizza')).toBe('rgb(20, 20, 120)');
-    expect(pizza === undefined ? '' : getComputedStyle(pizza).color).toBe(
-      'rgb(255, 255, 255)',
-    );
+    expect(path()).toEqual(['Pizza!', '-']);
+    const { background, text } = colours('Pizza');
+    expect(background).not.toBe('rgb(0, 0, 200)');
+    expect(background).toMatch(/^color\(srgb /);
+    // Selected items keep the normal text colour.
+    expect(text).toBe(getComputedStyle(select).color);
+  });
+
+  it('picks a readable text colour for the highlighted item', async () => {
+    select.style.setProperty('--liana-accent-color', 'rgb(20, 20, 120)');
+    await tabIn();
+    expect(colours('Pizza')).toEqual({
+      background: 'rgb(20, 20, 120)',
+      text: 'rgb(255, 255, 255)',
+    });
 
     select.style.setProperty('--liana-accent-color', 'rgb(250, 230, 120)');
-    select.value = '';
-    await tap(150, 50);
-    expect(pizza === undefined ? '' : getComputedStyle(pizza).color).toBe('rgb(0, 0, 0)');
+    select.blur();
+    await tabIn();
+    expect(colours('Pizza')).toEqual({
+      background: 'rgb(250, 230, 120)',
+      text: 'rgb(0, 0, 0)',
+    });
   });
 });
 
