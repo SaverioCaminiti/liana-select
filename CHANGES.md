@@ -3,6 +3,28 @@
 What changed in each release of `liana-select`, newest first. Version numbers
 follow [semantic versioning](https://semver.org/).
 
+## 1.3.0 - 2026-11-13
+
+### Added
+
+- The package is published on npm as `liana-select`, with the license, the
+  repository and the documentation site in its metadata. It can also be loaded
+  from a CDN, such as jsDelivr.
+- A stated browser support: current Chrome, Edge, Firefox and Safari, at least
+  Chrome and Edge 125, Firefox 126 and Safari 17.5.
+- Continuous integration on GitHub: types, lint, formatting, all the tests and
+  the builds run on every push and pull request.
+- The element tests run on Firefox and WebKit too, not only on Chromium.
+- `docs/releasing.md`, with the release and publication procedure.
+
+### Known limitations
+
+- The element takes over every touch on it, so the page cannot be scrolled by
+  dragging on it.
+- The search by label looks in the column of the cursor only.
+- No right-to-left layout, and no transitions when columns appear or resize.
+- Not tried yet with every screen reader.
+
 ## 1.2.0 - 2026-11-13
 
 ### Added

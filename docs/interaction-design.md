@@ -289,5 +289,3 @@ None at the moment.
   mouse and with simulated pointer events only.
 - Right-to-left layouts.
 - Transitions when columns appear, disappear or change width. None so far.
-- Publishing the package to a registry, such as npm. Until then the site tells
-  how to build it from the repository.
