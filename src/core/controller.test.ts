@@ -127,6 +127,16 @@ describe('LianaController, one continuous gesture', () => {
     expect(h.commits).toEqual(['water']);
   });
 
+  it('crosses several columns in a single fast move', () => {
+    const h = setup(menu, WIDE);
+    h.down(100, 25);
+    h.move(350, 75);
+    h.move(100, 25);
+    // Both columns to the right have been drawn and measured: jump over one.
+    h.move(650, 75);
+    expect(h.path()).toEqual(['pizza!', 'special!', 'seafood?']);
+  });
+
   it('needs to cross the border by the hysteresis before changing column', () => {
     const h = setup(menu, WIDE);
     h.down(100, 25);

@@ -239,12 +239,15 @@ export class LianaController {
     gesture.x = this.#clampX(x);
     gesture.y = this.#clampY(y);
 
-    // Sliding left over shrunk columns can go back several columns in one move.
-    for (;;) {
+    // One move can cross several columns: a fast flick, or a slide to the left
+    // over shrunk columns. The tree depth bounds the number of steps.
+    for (let step = 0; step <= this.#depth; step++) {
       const current = currentColumnIndex(this.#roots, this.#nav);
       const target = this.#targetColumn(gesture);
       if (target === current) break;
       this.#enterColumn(gesture, target, !gesture.engaged && target < current);
+      // Highlight the item in the new column, so that its preview exists.
+      this.#point(gesture);
     }
     this.#point(gesture);
     this.#changed();
@@ -315,9 +318,9 @@ export class LianaController {
    * The column the pointer belongs to, judged on the layout as it is drawn now.
    *
    * Normally it is the column under the pointer, with some hysteresis at the
-   * borders of the current one. But a change of column can move the layout, and
-   * leave the pointer outside the column it has just entered. Until the pointer
-   * has been inside that column:
+   * borders of the current one. But in the shrinking layout a change of column
+   * moves the columns, and can leave the pointer outside the column it has just
+   * entered. Until the pointer has been inside that column:
    * - to its right, the pointer stays in it, so that the levels do not open in a
    *   cascade under a pointer that is not moving;
    * - to its left, the pointer goes back one column for every `backtrackTravel`
@@ -358,15 +361,20 @@ export class LianaController {
    * without having been inside the previous one.
    */
   #enterColumn(gesture: Gesture, target: number, drifting = false): void {
+    const before = this.#boxes(this.#columns())[target];
     this.#nav = pointAt(this.#roots, this.#nav, target, null);
     const columns = this.#columns();
     const current = currentColumnIndex(this.#roots, this.#nav);
     const column = columns[current];
     const key = column === undefined ? '' : columnKey(column.parentPath);
+    const after = this.#boxes(columns)[current];
+    // If the column did not move, the pointer is where the user sees it: there
+    // is nothing to protect against, even when it is not inside the column.
+    const moved = before?.x !== after?.x || before?.width !== after?.width;
 
     gesture.anchorKey = key;
     gesture.anchor = { y: gesture.y, scroll: this.#scroll.get(key) ?? 0 };
-    gesture.engaged = isInside(gesture.x, this.#boxes(columns)[current]);
+    gesture.engaged = !moved || isInside(gesture.x, after);
     if (drifting) {
       gesture.driftSteps += 1;
     } else {
