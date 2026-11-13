@@ -5,6 +5,29 @@ follow [semantic versioning](https://semver.org/).
 
 ## Unreleased
 
+### Added
+
+- Keyboard navigation. The select is one tab stop; the arrow keys, Home and End
+  move a cursor, → and ← go into and out of groups, Enter or Space confirm an
+  option, Escape restores the previous choice, and letters jump to an item by
+  its label. Nothing is committed until an option is confirmed.
+- ARIA: the select is a tree for assistive technology, with the level, position
+  and state of each item. It takes its name from `aria-label` or from its
+  `<label>`.
+- The focus ring of the browser when the select is reached with the keyboard.
+- `--liana-accent-color`, from which all the colours derive, and
+  `--liana-highlight-text-color`.
+
+### Changed
+
+- Default colours: the item under the pointer or the cursor takes the colour of
+  the browser's focus ring mixed half and half with the background of the
+  field, with black or white text for contrast, and selected items a lighter
+  tint of it. The green of selected items is gone.
+- `value` read during a gesture now returns the committed value. Before, it could
+  briefly read as empty while the pointer was on a group. Events and the form
+  value were already updated only at release.
+
 ### Fixed
 
 - In a narrow space, a slide to the right could stop one level short: entering a

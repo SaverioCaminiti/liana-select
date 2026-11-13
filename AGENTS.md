@@ -42,14 +42,19 @@ gesture. It must be usable in plain HTML and inside any framework.
   one code path for mouse, touch and pen.
 - Form-associated custom element (`ElementInternals`), so it behaves like a native
   `<select>` inside a `<form>`.
+- Keyboard navigation and a WAI-ARIA tree, as specified in
+  `docs/interaction-design.md`. The keyboard logic lives in the core, like the
+  gesture.
+- Default colours come from the browser's focus ring, measured at runtime, so the
+  component matches the other inputs of the page.
+
+- Theming through CSS custom properties and `::part`. The custom properties are
+  listed in `docs/interaction-design.md`, section "Styling".
 
 ## Proposed, not yet confirmed by the owner
 
-Discuss these before building on them:
-
-- Full keyboard navigation and ARIA roles, since the single gesture is not usable
-  by everyone. Deferred: listed as to do in `docs/interaction-design.md`.
-- Theming through CSS custom properties and `::part`.
+None at the moment. Discuss new proposals with the owner before building on
+them.
 
 ## Not yet defined: ask, do not invent
 
@@ -90,15 +95,17 @@ Discuss these before building on them:
 
 ## Current status
 
-Version 1.1.0 is released: the interaction designed in
-`docs/interaction-design.md` is implemented.
+Version 1.2.0 is released: the interaction designed in
+`docs/interaction-design.md` is implemented, keyboard and ARIA included.
 
-- `src/core`: `tree.ts` (model), `navigation.ts` (selected path and highlight),
+- `src/core`: `tree.ts` (model), `navigation.ts` (selected path, highlight and
+  keyboard cursor),
   `scroll.ts` (anchored vertical scroll), `layout.ts` (column widths),
-  `hit-test.ts`, and `controller.ts` (`LianaController`, the gesture state machine
-  that composes them).
-- `src/element`: `liana-select.ts` (form-associated Lit element), the data
-  elements `liana-group.ts` and `liana-option.ts`, and `read-tree.ts`.
+  `hit-test.ts`, and `controller.ts` (`LianaController`, the state machine of the
+  gesture and of the keyboard, which composes them).
+- `src/element`: `liana-select.ts` (form-associated Lit element: rendering, ARIA,
+  pointer and key events, runtime colours), `contrast.ts`, the data elements
+  `liana-group.ts` and `liana-option.ts`, and `read-tree.ts`.
 - `demo/`: a restaurant menu in several configurations, for development. Its
   menu data lives in `demo/menu.ts`, shared with the site.
 - `site/`: the documentation site published on GitHub Pages by
@@ -106,6 +113,6 @@ Version 1.1.0 is released: the interaction designed in
   release. Each example shows the exact code it runs: keep it that way, and
   update the site when the public API changes.
 
-Next steps: the owner reviews the "Choices made while implementing" section of
-the design document and tries the gesture on a real touch device. Then keyboard
-navigation and ARIA.
+Next steps: the items under "To do" in `docs/interaction-design.md`, starting
+with trying the component with real screen readers and touch devices, and the
+owner's review of its "Choices made while implementing" section.

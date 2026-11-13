@@ -19,6 +19,7 @@ import type { LianaSelect } from './liana-select';
  */
 const MARKUP = `
   <form>
+    <button type="button" id="before">Before</button>
     <liana-select name="dish" style="width: 900px; height: 300px; border: 0">
       <liana-group label="Pizza">
         <liana-option value="margherita">Margherita</liana-option>
@@ -36,6 +37,7 @@ const MARKUP = `
       </liana-group>
       <liana-option value="bread">Bread</liana-option>
     </liana-select>
+    <button type="button" id="after">After</button>
   </form>
 `;
 
@@ -267,6 +269,235 @@ describe('<liana-select> with fractional sizes', () => {
       expect(scrolled.every((transform) => transform === 'translateY(0px)')).toBe(true);
     },
   );
+});
+
+describe('<liana-select> with the keyboard', () => {
+  /** Focuses the button before the select, then tabs into the select. */
+  async function tabIn(): Promise<void> {
+    document.querySelector<HTMLElement>('#before')?.focus();
+    await userEvent.tab();
+    await settled();
+  }
+
+  async function press(...keys: string[]): Promise<void> {
+    for (const key of keys) await userEvent.keyboard(`{${key}}`);
+    await settled();
+  }
+
+  function tree(): HTMLElement {
+    const element = select.shadowRoot?.querySelector<HTMLElement>('[role="tree"]');
+    if (element == null) throw new Error('No tree in the shadow root');
+    return element;
+  }
+
+  it('is one tab stop, and shows the cursor when reached with Tab', async () => {
+    await tabIn();
+    expect(document.activeElement).toBe(select);
+    expect(select.shadowRoot?.activeElement).toBe(tree());
+    expect(select.matches(':state(focus-visible)')).toBe(true);
+    expect(path()).toEqual(['Pizza?', '-']);
+    expect(tree().getAttribute('aria-activedescendant')).toBe('item-0');
+
+    await userEvent.tab();
+    expect(document.activeElement?.id).toBe('after');
+    expect(select.matches(':state(focus-visible)')).toBe(false);
+  });
+
+  it('navigates and commits once, on Enter', async () => {
+    await tabIn();
+    await press('ArrowRight', 'ArrowDown');
+    expect(path()).toEqual(['Pizza!', 'Special?', '-']);
+    await press('ArrowRight', 'ArrowDown');
+    expect(path()).toEqual(['Pizza!', 'Special!', 'Seafood?']);
+    expect(select.value).toBe('');
+    expect(events).toEqual([]);
+
+    await press('Enter');
+    expect(select.value).toBe('seafood');
+    expect(new FormData(form).get('dish')).toBe('seafood');
+    expect(events).toEqual(['input:seafood', 'change:seafood']);
+  });
+
+  it('commits with Space too, and searches by the first letters', async () => {
+    await tabIn();
+    await userEvent.keyboard('b');
+    await settled();
+    expect(path()).toEqual(['Bread?']);
+    // A space right after a letter is part of the search: wait for it to end.
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    await press(' ');
+    expect(select.value).toBe('bread');
+  });
+
+  it('restores the selection on Escape', async () => {
+    select.value = 'seafood';
+    await tabIn();
+    expect(path()).toEqual(['Pizza!', 'Special!', 'Seafood?']);
+    await press('ArrowLeft', 'ArrowLeft', 'ArrowDown');
+    expect(path()).toEqual(['Drinks?', '-']);
+    await press('Escape');
+    expect(path()).toEqual(['Pizza!', 'Special!', 'Seafood!']);
+    expect(select.value).toBe('seafood');
+    expect(events).toEqual([]);
+  });
+
+  it('restores the selection when the focus moves on without confirming', async () => {
+    await tabIn();
+    await press('ArrowDown', 'ArrowRight');
+    await userEvent.tab();
+    await settled();
+    expect(path()).toEqual(['-']);
+    expect(events).toEqual([]);
+  });
+
+  it('cannot be reached when disabled', async () => {
+    select.disabled = true;
+    await settled();
+    await tabIn();
+    expect(document.activeElement?.id).toBe('after');
+  });
+
+  it('exposes a tree to assistive technology', async () => {
+    await tabIn();
+    await press('ArrowRight');
+    const items = Array.from(
+      select.shadowRoot?.querySelectorAll<HTMLElement>('[role="treeitem"]') ?? [],
+    );
+    const describe = (item: HTMLElement | undefined): Record<string, string | null> => ({
+      label: item?.textContent.trim() ?? null,
+      level: item?.getAttribute('aria-level') ?? null,
+      position: `${item?.getAttribute('aria-posinset') ?? '?'}/${item?.getAttribute('aria-setsize') ?? '?'}`,
+      expanded: item?.getAttribute('aria-expanded') ?? null,
+    });
+    expect(describe(items[0])).toEqual({
+      label: 'Pizza',
+      level: '1',
+      position: '1/3',
+      expanded: 'true',
+    });
+    expect(describe(items[2])).toEqual({
+      label: 'Bread',
+      level: '1',
+      position: '3/3',
+      expanded: null,
+    });
+    expect(describe(items[4])).toEqual({
+      label: 'Special',
+      level: '2',
+      position: '2/3',
+      expanded: 'false',
+    });
+    expect(tree().getAttribute('aria-activedescendant')).toBe('item-0-0');
+    // The disabled option is announced as such.
+    await press('ArrowLeft', 'ArrowDown', 'ArrowRight');
+    const wine = select.shadowRoot?.querySelector('[role="treeitem"][id="item-1-1"]');
+    expect(wine?.getAttribute('aria-disabled')).toBe('true');
+  });
+
+  it('takes its accessible name from aria-label or from its label', async () => {
+    select.id = 'dish';
+    const label = document.createElement('label');
+    label.htmlFor = 'dish';
+    label.textContent = 'Your dish';
+    form.prepend(label);
+    select.requestUpdate();
+    await settled();
+    expect(tree().getAttribute('aria-label')).toBe('Your dish');
+
+    select.setAttribute('aria-label', 'Dish of the day');
+    await settled();
+    expect(tree().getAttribute('aria-label')).toBe('Dish of the day');
+  });
+});
+
+describe('<liana-select> colours', () => {
+  function item(label: string): Element | undefined {
+    return Array.from(select.shadowRoot?.querySelectorAll('.item') ?? []).find(
+      (element) => element.textContent.trim() === label,
+    );
+  }
+
+  function colours(label: string): { background: string; text: string } {
+    const element = item(label);
+    if (element === undefined) return { background: '', text: '' };
+    const style = getComputedStyle(element);
+    return { background: style.backgroundColor, text: style.color };
+  }
+
+  /** The colour a CSS colour value computes to, with the colour scheme of the select. */
+  function computed(value: string): string {
+    const probe = document.createElement('div');
+    probe.style.colorScheme = 'light dark';
+    probe.style.backgroundColor = value;
+    document.body.append(probe);
+    const colour = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return colour;
+  }
+
+  /** Tabs into the select from the button before it: the cursor is on Pizza. */
+  async function tabIn(): Promise<void> {
+    document.querySelector<HTMLElement>('#before')?.focus();
+    await userEvent.tab();
+    await settled();
+  }
+
+  it('highlights with the colour of the browser focus ring, lightened', async () => {
+    // The ring of a button reached with the keyboard.
+    document.querySelector<HTMLElement>('#before')?.focus();
+    await userEvent.tab();
+    await userEvent.tab({ shift: true });
+    const focused = document.activeElement;
+    if (focused === null) throw new Error('Nothing is focused');
+    expect(focused.id).toBe('before');
+    const ring = getComputedStyle(focused).outlineColor;
+
+    await userEvent.tab();
+    await settled();
+    expect(path()).toEqual(['Pizza?', '-']);
+    // Half the ring colour, half the background of the field.
+    expect(colours('Pizza').background).toBe(
+      computed(`color-mix(in srgb, ${ring} 50%, Field)`),
+    );
+    // The focus ring itself is the browser's colour, unmixed.
+    expect(getComputedStyle(select).outlineColor).toBe(ring);
+  });
+
+  it('shows selected items in a lighter tint of the same colour', async () => {
+    select.style.setProperty('--liana-accent-color', 'rgb(0, 0, 200)');
+    await tap(150, 50);
+    expect(path()).toEqual(['Pizza!', '-']);
+    const { background, text } = colours('Pizza');
+    expect(background).not.toBe('rgb(0, 0, 200)');
+    expect(background).toMatch(/^color\(srgb /);
+    // Selected items keep the normal text colour.
+    expect(text).toBe(getComputedStyle(select).color);
+  });
+
+  it('derives the highlight from the accent colour', async () => {
+    select.style.setProperty('--liana-accent-color', 'rgb(0, 0, 200)');
+    await tabIn();
+    expect(colours('Pizza').background).toBe(
+      computed('color-mix(in srgb, rgb(0, 0, 200) 50%, Field)'),
+    );
+  });
+
+  it('picks a readable text colour for the highlighted item', async () => {
+    select.style.setProperty('--liana-highlight-color', 'rgb(20, 20, 120)');
+    await tabIn();
+    expect(colours('Pizza')).toEqual({
+      background: 'rgb(20, 20, 120)',
+      text: 'rgb(255, 255, 255)',
+    });
+
+    select.style.setProperty('--liana-highlight-color', 'rgb(250, 230, 120)');
+    select.blur();
+    await tabIn();
+    expect(colours('Pizza')).toEqual({
+      background: 'rgb(250, 230, 120)',
+      text: 'rgb(0, 0, 0)',
+    });
+  });
 });
 
 describe('<liana-select> in a form', () => {
