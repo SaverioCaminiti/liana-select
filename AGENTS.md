@@ -24,7 +24,8 @@ gesture. It must be usable in plain HTML and inside any framework.
   - The boundary is enforced by tooling: `src/core` is type-checked with
     `tsconfig.core.json`, which has no DOM lib, and ESLint forbids importing `lit`
     or the element from `src/core`.
-- Tooling: pnpm, Vitest (core tests run in Node, no DOM), ESLint flat config with
+- Tooling: pnpm, Vitest in two projects (`core` in Node with no DOM, `browser` in
+  headless Chromium through Playwright for the element), ESLint flat config with
   `typescript-eslint` (strict, type-aware), `eslint-plugin-lit`, `eslint-plugin-wc`,
   and Prettier for formatting.
 - TypeScript is pinned to 6.0 because `typescript-eslint` does not support 7.x yet.
@@ -55,8 +56,6 @@ Discuss these before building on them:
 - Anything about the interaction that `docs/interaction-design.md` does not state.
 - Public API beyond what that document fixes: names of further attributes,
   properties, events and CSS custom properties.
-- Browser tests for the element (proposed: Vitest browser mode with Playwright,
-  added once the element has behaviour worth testing).
 - License (a MIT `LICENSE` file exists, but it is not confirmed), publishing and CI.
 
 ## Conventions
@@ -74,16 +73,26 @@ Discuss these before building on them:
 - `pnpm install`: install dependencies.
 - `pnpm dev`: serve the demo page (`demo/index.html`) with hot reload.
 - `pnpm build`: build `dist/` (Vite library build, then `.d.ts` files via `tsc`).
-- `pnpm test` / `pnpm test:watch`: run the Vitest suite.
+- `pnpm test` / `pnpm test:watch`: run the core tests, in Node.
+- `pnpm test:browser`: run the element tests (`*.browser.test.ts`) in headless
+  Chromium. Needs `pnpm exec playwright install --only-shell chromium` once.
+- `pnpm test:all`: run both.
 - `pnpm typecheck`: type-check core (no DOM), element and demo, and tooling files.
 - `pnpm lint`: run ESLint.
 - `pnpm format` / `pnpm format:check`: run Prettier.
 
 ## Current status
 
-Scaffolded. `src/core/tree.ts` holds a minimal, provisional internal tree model
-(`TreeNode`, `NodePath`, `isLeaf`, `getNodeAtPath`, `findPathById`) with tests. It
-is not the public input format. `src/element/liana-select.ts` is a placeholder
-element with no public API. The interaction design is written down in
-`docs/interaction-design.md`, with no open questions. Next step: implement it,
-starting from the core.
+The interaction designed in `docs/interaction-design.md` is implemented.
+
+- `src/core`: `tree.ts` (model), `navigation.ts` (selected path and highlight),
+  `scroll.ts` (anchored vertical scroll), `layout.ts` (column widths),
+  `hit-test.ts`, and `controller.ts` (`LianaController`, the gesture state machine
+  that composes them).
+- `src/element`: `liana-select.ts` (form-associated Lit element), the data
+  elements `liana-group.ts` and `liana-option.ts`, and `read-tree.ts`.
+- `demo/`: a restaurant menu in several configurations.
+
+Next steps: the owner reviews the "Choices made while implementing" section of
+the design document and tries the gesture on a real touch device. Then keyboard
+navigation and ARIA.

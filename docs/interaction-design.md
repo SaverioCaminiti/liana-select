@@ -166,6 +166,54 @@ There is never horizontal scrolling and never a horizontal scrollbar.
 - A flat tree (one level) uses a single full-width column.
 - Highlight and selection colours are themeable, light blue and green by default.
 
+## Choices made while implementing: to review
+
+The design did not cover these. They were chosen by the implementer and have not
+been reviewed by the owner yet.
+
+**When the layout moves under the pointer.** In the shrinking layout, entering a
+column moves the columns, so the pointer can end up outside the column it has
+just entered. Following the pointer blindly would then open or close several
+levels in a cascade while the pointer is not moving. So, until the pointer has
+been inside the new current column:
+
+- If the pointer is to its right, typically just after entering a preview near
+  the right edge, the pointer stays in that column and keeps choosing in it by
+  height. To go one level deeper the user moves back inside the column and then
+  right again.
+- If the pointer is to its left, typically just after going back onto a shrunk
+  column, it goes back one more column for every 24 pixels of further travel to
+  the left. So sliding left always leads back to the first column, one level at
+  a time.
+
+In the equal parts layout the columns never move, and none of this applies.
+
+**Other choices.**
+
+- The hysteresis at the borders of the current column is 8 pixels.
+- A fast move that crosses several columns in one event goes through each of
+  them, choosing by height, as if it had passed over them slowly.
+- In the shrinking layout, space that the left columns do not need at their
+  collapsed minimum goes first to the preview, up to a full column, then to the
+  left columns.
+- A press to the right of the last column counts as a press inside it, as for a
+  move (step 6 of the gesture).
+- A value set from a script before its option exists is remembered, and applied
+  when the option appears.
+- The `value` of a `<liana-option>` defaults to its label, as for `<option>`. The
+  last option marked `selected` wins.
+- A form reset goes back to the option marked `selected`, or to no value.
+- No transitions or animations yet.
+
+## Styling
+
+- `--liana-item-min-height` (default `2.75rem`) and `--liana-item-max-height`
+  (default `none`).
+- `--liana-column-min-width` (default `10rem`): the minimum content width.
+- `--liana-column-collapsed-min-width` (default `2rem`).
+- `--liana-highlight-color` and `--liana-selected-color`.
+- `::part(column)` and `::part(item)`.
+
 ## Open questions
 
 None at the moment.
@@ -177,3 +225,6 @@ None at the moment.
   alternatives later, for example two-finger scrolling or shift + drag, as
   embedded maps do.
 - Keyboard navigation and ARIA.
+- Try the gesture on real touch devices. So far it has been exercised with a
+  mouse and with simulated pointer events only.
+- Right-to-left layouts.
