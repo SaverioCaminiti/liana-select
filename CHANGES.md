@@ -3,7 +3,7 @@
 What changed in each release of `liana-select`, newest first. Version numbers
 follow [semantic versioning](https://semver.org/).
 
-## Unreleased
+## 1.2.0 - 2026-11-13
 
 ### Added
 
@@ -33,6 +33,15 @@ follow [semantic versioning](https://semver.org/).
 - In a narrow space, a slide to the right could stop one level short: entering a
   column moves the columns to the left, and the pointer, already over the next
   column, kept choosing in the previous one. It now chooses what is under it.
+
+### Known limitations
+
+- The element takes over every touch on it, so the page cannot be scrolled by
+  dragging on it.
+- The search by label looks in the column of the cursor only.
+- No right-to-left layout, and no transitions when columns appear or resize.
+- Not tried yet with every screen reader.
+- The package is not published to a registry.
 
 ## 1.1.0 - 2026-11-13
 
