@@ -234,8 +234,9 @@ export class LianaController {
     const navBefore = this.#nav;
     const scrollBefore = new Map(this.#scroll);
     if (this.#gesture !== undefined) {
-      // The column under the pointer may have just been measured.
-      this.#point(this.#gesture);
+      // The column under the pointer may have just been measured: choose in it,
+      // and follow the pointer on if that opens a column under it.
+      this.#follow(this.#gesture);
     } else {
       this.#settleScroll();
     }
@@ -268,7 +269,7 @@ export class LianaController {
     this.#gesture = gesture;
     this.#revealPending = false;
     this.#enterColumn(gesture, target);
-    this.#point(gesture);
+    this.#follow(gesture);
     this.#changed();
   }
 
@@ -277,18 +278,7 @@ export class LianaController {
     if (gesture === undefined) return;
     gesture.x = this.#clampX(x);
     gesture.y = this.#clampY(y);
-
-    // One move can cross several columns: a fast flick, or a slide to the left
-    // over shrunk columns. The tree depth bounds the number of steps.
-    for (let step = 0; step <= this.#depth; step++) {
-      const current = currentColumnIndex(this.#roots, this.#nav);
-      const target = this.#targetColumn(gesture);
-      if (target === current) break;
-      this.#enterColumn(gesture, target, !gesture.engaged && target < current);
-      // Highlight the item in the new column, so that its preview exists.
-      this.#point(gesture);
-    }
-    this.#point(gesture);
+    this.#follow(gesture);
     this.#changed();
   }
 
@@ -354,17 +344,50 @@ export class LianaController {
   }
 
   /**
+   * Brings the state in line with the pointer: changes column as long as the
+   * pointer belongs to another one, then chooses the item under it.
+   *
+   * A change of column can move the layout, and so put the pointer over yet
+   * another column without it moving: going right, choosing in the new column
+   * can open a preview right under the pointer. The loop follows, one level at
+   * a time, so that what ends up chosen is what the user sees under the
+   * pointer. It stops on an option, an empty area, a column whose layout did not
+   * move, or a column not measured yet; `setMetrics` resumes it then. The tree
+   * depth bounds the number of steps.
+   */
+  #follow(gesture: Gesture): void {
+    // Each step changes column, or chooses and stops: every column of the tree
+    // can be entered once going right and once going left at most.
+    for (let step = 0; step <= 2 * this.#depth + 1; step++) {
+      // Judge the column first, on what is drawn: the pointer moved over it.
+      const current = currentColumnIndex(this.#roots, this.#nav);
+      const target = this.#targetColumn(gesture);
+      if (target !== current) {
+        this.#enterColumn(gesture, target, !gesture.engaged && target < current);
+        // Choose in the new column, so that its preview exists for the next step.
+        this.#point(gesture);
+        continue;
+      }
+      // Then choose in it. That may open a preview right under the pointer.
+      this.#point(gesture);
+      if (this.#targetColumn(gesture) === current) return;
+    }
+  }
+
+  /**
    * The column the pointer belongs to, judged on the layout as it is drawn now.
    *
    * Normally it is the column under the pointer, with some hysteresis at the
-   * borders of the current one. But in the shrinking layout a change of column
-   * moves the columns, and can leave the pointer outside the column it has just
-   * entered. Until the pointer has been inside that column:
-   * - to its right, the pointer stays in it, so that the levels do not open in a
-   *   cascade under a pointer that is not moving;
-   * - to its left, the pointer goes back one column for every `backtrackTravel`
-   *   pixels of further travel to the left, so that sliding left always leads
-   *   back to the first column, one level at a time.
+   * borders of the current one. To the right this always holds: when the pointer
+   * is over the next column, by more than the hysteresis, it belongs to it, even
+   * right after a change of column moved the layout under it.
+   *
+   * To the left it does not. Going back makes the columns wider, which can leave
+   * the pointer to the left of the column it has just entered, over an even
+   * earlier one. Following that would jump back several levels at once. So,
+   * until the pointer has been inside the new current column, it goes back one
+   * more column for every `backtrackTravel` pixels of further travel to the
+   * left: sliding left leads back to the first column, one level at a time.
    */
   #targetColumn(gesture: Gesture): number {
     const columns = this.#columns();
@@ -373,6 +396,11 @@ export class LianaController {
     const box = boxes[current];
     if (box === undefined) return current;
     const { hysteresis, backtrackTravel } = this.#options;
+
+    const next = boxes[current + 1];
+    if (next !== undefined && next.width > 0 && gesture.x >= next.x + hysteresis) {
+      return current + 1;
+    }
 
     if (!gesture.engaged) {
       if (isInside(gesture.x, box)) {
@@ -387,17 +415,13 @@ export class LianaController {
     }
 
     if (gesture.x < box.x - hysteresis) return columnUnder(gesture.x, boxes);
-    const next = boxes[current + 1];
-    if (next !== undefined && next.width > 0 && gesture.x >= next.x + hysteresis) {
-      return current + 1;
-    }
     return current;
   }
 
   /**
    * Makes `target` the current column and anchors its scroll at the pointer.
    * `drifting` tells that the pointer got here by going back over shrunk columns,
-   * without having been inside the previous one.
+   * without having been inside the previous one. The caller chooses the item.
    */
   #enterColumn(gesture: Gesture, target: number, drifting = false): void {
     const before = this.#boxes(this.#columns())[target];

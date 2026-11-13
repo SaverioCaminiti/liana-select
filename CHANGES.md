@@ -3,6 +3,14 @@
 What changed in each release of `liana-select`, newest first. Version numbers
 follow [semantic versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixed
+
+- In a narrow space, a slide to the right could stop one level short: entering a
+  column moves the columns to the left, and the pointer, already over the next
+  column, kept choosing in the previous one. It now chooses what is under it.
+
 ## 1.1.0 - 2026-11-13
 
 ### Added

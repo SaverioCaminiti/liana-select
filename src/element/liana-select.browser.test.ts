@@ -206,6 +206,44 @@ describe('<liana-select> gesture', () => {
   });
 });
 
+describe('<liana-select> with a deep tree in a narrow space', () => {
+  // As in the documentation: too narrow for one column per level, so entering
+  // a column moves the layout under the pointer.
+  const GEO = `
+    <liana-select style="width: 352px; height: 300px; border: 0">
+      <liana-group label="Europe">
+        <liana-group label="Italy">
+          <liana-group label="Lazio">
+            <liana-option value="rome">Rome</liana-option>
+            <liana-option value="viterbo">Viterbo</liana-option>
+          </liana-group>
+          <liana-group label="Tuscany">
+            <liana-option value="florence">Florence</liana-option>
+          </liana-group>
+        </liana-group>
+      </liana-group>
+      <liana-group label="Asia">
+        <liana-group label="Japan">
+          <liana-group label="Kansai">
+            <liana-option value="kyoto">Kyoto</liana-option>
+          </liana-group>
+        </liana-group>
+      </liana-group>
+    </liana-select>
+  `;
+
+  it('reaches the option under the pointer in one slide to the right', async () => {
+    document.body.innerHTML = GEO;
+    select = find('liana-select');
+    await settled();
+
+    // Europe, Italy, Lazio and Rome are all first in their column.
+    await drag([40, 20], [330, 20]);
+    expect(path()).toEqual(['Europe!', 'Italy!', 'Lazio!', 'Rome!']);
+    expect(select.value).toBe('rome');
+  });
+});
+
 describe('<liana-select> with fractional sizes', () => {
   // Regression: a height that is not a whole number of pixels made the column
   // look overflowing by a fraction of a pixel, and the measure / scroll / draw

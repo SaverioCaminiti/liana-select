@@ -173,18 +173,21 @@ been reviewed by the owner yet.
 
 **When the layout moves under the pointer.** In the shrinking layout, entering a
 column moves the columns, so the pointer can end up outside the column it has
-just entered. Following the pointer blindly would then open or close several
-levels in a cascade while the pointer is not moving. So, until the pointer has
-been inside the new current column:
+just entered, without moving.
 
-- If the pointer is to its right, typically just after entering a preview near
-  the right edge, the pointer stays in that column and keeps choosing in it by
-  height. To go one level deeper the user moves back inside the column and then
-  right again.
-- If the pointer is to its left, typically just after going back onto a shrunk
-  column, it goes back one more column for every 24 pixels of further travel to
-  the left. So sliding left always leads back to the first column, one level at
-  a time.
+- **To its right** (agreed with the owner): what counts is what is under the
+  pointer now. Going right, the columns shift left, and the pointer may already
+  be over the preview of the item it is choosing. It enters that column at once
+  and chooses there by height, and so on, level after level, until it lands on
+  an option, an empty area, or a column that does not move. A slide from
+  _Europe_ that ends over _Rome_ selects Europe, Italy and Lazio and highlights
+  Rome. A column that has not been drawn yet is entered as soon as it is
+  measured. A margin of 8 pixels at the border avoids flicker.
+- **To its left**: going back makes the columns wider, and can leave the pointer
+  over an even earlier column. Following it would jump back several levels at
+  once, so until the pointer has been inside the new current column it goes back
+  one more column for every 24 pixels of further travel to the left. Sliding
+  left leads back to the first column, one level at a time.
 
 In the equal parts layout the columns never move, and none of this applies.
 

@@ -394,28 +394,99 @@ describe('LianaController, shrinking layout', () => {
     expect(widths(h)).toEqual([0, 40, 40, 40, 200]);
   });
 
-  it('does not open the levels in a cascade when the layout moves under the pointer', () => {
+  /** Measures and redraws until the view stops changing. */
+  function settleAll(h: Harness): void {
+    for (let pass = 0; pass < 10; pass++) h.settle();
+  }
+
+  /** Index of the column that holds the highlighted item, or -1. */
+  function highlightedColumn(h: Harness): number {
+    return h.controller.view.columns.findIndex((column) =>
+      column.items.some((item) => item.state === 'highlighted'),
+    );
+  }
+
+  it('follows the pointer into the column that the layout moved under it', () => {
     const h = setup(chain(0), NARROW);
     h.down(100, 25);
-    // Entering the preview moves the columns: the pointer is now to the right of
-    // the column it has just entered, over the next preview.
+    // Entering the preview moves the columns to the left: the pointer, which has
+    // not moved, is now over the column after the one it entered. It belongs
+    // there, and chooses there.
     h.move(260, 25);
-    expect(h.path()).toEqual(['level0!', 'level1?', '-']);
-    h.move(270, 25);
-    h.move(390, 25);
-    expect(h.path()).toEqual(['level0!', 'level1?', '-']);
-    // It still chooses within that column by height.
-    h.move(390, 75);
-    expect(h.path()).toEqual(['level0!', 'leaf1?']);
+    expect(widths(h)).toEqual([40, 40, 200, 120]);
+    expect(h.path()).toEqual(['level0!', 'level1!', 'level2?', '-']);
   });
 
-  it('goes one level deeper after coming back inside the current column', () => {
+  it('keeps following when the column under the pointer is measured later', () => {
+    const h = setup(chain(0), NARROW);
+    h.down(100, 25);
+    // Without measurements of the new columns the pointer can only enter them.
+    h.controller.pointerMove(260, 25);
+    expect(h.path()).toEqual(['level0!', 'level1!', '-']);
+    // As soon as they are drawn and measured, it chooses in them.
+    h.settle();
+    expect(h.path()).toEqual(['level0!', 'level1!', 'level2?', '-']);
+  });
+
+  it('chooses by height in the column it lands on', () => {
     const h = setup(chain(0), NARROW);
     h.down(100, 25);
     h.move(260, 25);
-    h.move(150, 25);
-    h.move(300, 25);
-    expect(h.path()).toEqual(['level0!', 'level1!', 'level2?', '-']);
+    h.move(390, 75);
+    settleAll(h);
+    expect(h.path()).toEqual(['level0!', 'level1!', 'level2!', 'leaf3?']);
+  });
+
+  it('always highlights in the column under the pointer while sliding right', () => {
+    const h = setup(chain(0), NARROW);
+    h.down(10, 25);
+    for (let x = 10; x < 400; x += 6) {
+      h.move(x, 25);
+      settleAll(h);
+      const columns = h.controller.view.columns;
+      const index = highlightedColumn(h);
+      const box = columns[index];
+      expect(box, `nothing highlighted at x = ${String(x)}`).toBeDefined();
+      if (box === undefined) return;
+      const isLast = index === columns.length - 1 || columns[index + 1]?.width === 0;
+      const inside = x >= box.x - 8 && x < box.x + box.width + 8;
+      expect(
+        inside || isLast,
+        `x = ${String(x)} is not over column ${String(index)}`,
+      ).toBe(true);
+    }
+    // Sliding all the way right went all the way down, to the only leaf there.
+    expect(h.path().at(-1)).toBe('leaf5?');
+  });
+
+  it('reaches a city in one slide through continent, country and region', () => {
+    const geo = [
+      group('Europe', [
+        group('Italy', [
+          group('Lazio', [option('rome'), option('viterbo')]),
+          group('Tuscany', [option('florence'), option('siena')]),
+        ]),
+        group('France', [group('Provence', [option('marseille')])]),
+      ]),
+      group('Asia', [group('Japan', [group('Kansai', [option('kyoto')])])]),
+    ];
+    // As in the documentation: 352 wide, so four columns do not fit.
+    const h = setup(
+      geo,
+      { width: 352, height: 300 },
+      {
+        minContentWidth: 160,
+        collapsedMinWidth: 64,
+      },
+    );
+    h.down(40, 25);
+    for (let x = 40; x <= 340; x += 10) {
+      h.move(x, 25);
+      settleAll(h);
+    }
+    expect(h.path()).toEqual(['Europe!', 'Italy!', 'Lazio!', 'rome?']);
+    h.up();
+    expect(h.controller.value).toBe('rome');
   });
 
   it('goes back one column at a time while sliding left over shrunk columns', () => {
