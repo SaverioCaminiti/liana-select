@@ -9,8 +9,9 @@ with a single gesture.
 
 ## Status
 
-Early development. The interaction works, but nothing is published yet, and
-keyboard navigation and ARIA are still missing.
+Version 1.0.0: the interaction works with mouse, touch and pen. Keyboard
+navigation and ARIA are still missing, and the package is not published to a
+registry yet. See [CHANGES.md](CHANGES.md) for the history.
 
 ## Usage
 
