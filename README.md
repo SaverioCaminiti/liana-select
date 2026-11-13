@@ -12,8 +12,8 @@ with a single gesture.
 
 ## Status
 
-Version 1.1.0: the interaction works with mouse, touch and pen. The next release
-adds keyboard navigation and ARIA, already on `develop`. The package is not
+Version 1.2.0: the interaction works with mouse, touch, pen and keyboard, and the
+element is exposed to assistive technology as a tree. The package is not
 published to a registry yet. See [CHANGES.md](CHANGES.md) for the history.
 
 ## Usage

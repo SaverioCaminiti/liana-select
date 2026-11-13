@@ -48,11 +48,13 @@ gesture. It must be usable in plain HTML and inside any framework.
 - Default colours come from the browser's focus ring, measured at runtime, so the
   component matches the other inputs of the page.
 
+- Theming through CSS custom properties and `::part`. The custom properties are
+  listed in `docs/interaction-design.md`, section "Styling".
+
 ## Proposed, not yet confirmed by the owner
 
-Discuss these before building on them:
-
-- Theming through CSS custom properties and `::part`.
+None at the moment. Discuss new proposals with the owner before building on
+them.
 
 ## Not yet defined: ask, do not invent
 
@@ -93,8 +95,8 @@ Discuss these before building on them:
 
 ## Current status
 
-Version 1.1.0 is released: the interaction designed in
-`docs/interaction-design.md` is implemented.
+Version 1.2.0 is released: the interaction designed in
+`docs/interaction-design.md` is implemented, keyboard and ARIA included.
 
 - `src/core`: `tree.ts` (model), `navigation.ts` (selected path, highlight and
   keyboard cursor),
@@ -111,7 +113,6 @@ Version 1.1.0 is released: the interaction designed in
   release. Each example shows the exact code it runs: keep it that way, and
   update the site when the public API changes.
 
-Keyboard navigation, ARIA and the colours taken from the browser's focus ring are
-on `develop`, not released yet. Next steps: the owner tries them, including with a
-screen reader, and reviews the "Choices made while implementing" section of the
-design document.
+Next steps: the items under "To do" in `docs/interaction-design.md`, starting
+with trying the component with real screen readers and touch devices, and the
+owner's review of its "Choices made while implementing" section.
