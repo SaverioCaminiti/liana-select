@@ -1,0 +1,52 @@
+# Publishes the package to npm when a release tag, such as 1.3.0, is pushed:
+# git flow release finish tags main, and pushing the tag starts this workflow.
+#
+# It uses npm trusted publishing: no token is stored, GitHub proves to npm that
+# the package comes from this workflow, and npm records that provenance.
+#
+# One-time setup, after the first version has been published by hand:
+# 1. On npmjs.com, in the settings of the liana-select package, add a trusted
+#    publisher: GitHub Actions, this repository, workflow file "publish.yml".
+# 2. In this repository, Settings > Secrets and variables > Actions > Variables,
+#    add NPM_TRUSTED_PUBLISHING with the value "true".
+# Until then the job is skipped, so a release tag does not fail the workflow.
+name: Publish to npm
+
+on:
+  push:
+    tags: ['[0-9]+.[0-9]+.[0-9]+']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    if: vars.NPM_TRUSTED_PUBLISHING == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      # Trusted publishing needs npm 11.5.1 or later.
+      - run: npm install --global npm@^11.5.1
+      - run: pnpm install --frozen-lockfile
+      - name: Check that the tag matches the version in package.json
+        if: github.ref_type == 'tag'
+        run: |
+          version=$(node --print "require('./package.json').version")
+          if [ "$version" != "$GITHUB_REF_NAME" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match package.json version $version"
+            exit 1
+          fi
+      - run: pnpm exec playwright install --with-deps chromium firefox webkit
+      - run: pnpm test:all
+      # prepublishOnly checks, tests and builds the package again before upload.
+      - run: npm publish --provenance --access public

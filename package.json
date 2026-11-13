@@ -1,8 +1,29 @@
 {
   "name": "liana-select",
   "version": "1.2.0",
-  "private": true,
   "description": "Swing through a tree of options and select one in a single, swift gesture.",
+  "keywords": [
+    "web-component",
+    "custom-element",
+    "select",
+    "tree",
+    "hierarchical",
+    "gesture",
+    "touch",
+    "form",
+    "accessibility",
+    "lit"
+  ],
+  "license": "MIT",
+  "author": "Saverio Caminiti",
+  "homepage": "https://saveriocaminiti.github.io/liana-select/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SaverioCaminiti/liana-select.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SaverioCaminiti/liana-select/issues"
+  },
   "type": "module",
   "files": [
     "dist"
@@ -39,7 +60,8 @@
     "test:all": "vitest run",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "prepublishOnly": "pnpm typecheck && pnpm lint && pnpm test && pnpm build"
   },
   "dependencies": {
     "lit": "^3.3.3"

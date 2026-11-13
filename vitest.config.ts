@@ -21,7 +21,12 @@ export default defineConfig({
             enabled: true,
             headless: true,
             provider: playwright(),
-            instances: [{ browser: 'chromium' }],
+            // The engines of Chrome and Edge, Firefox, and Safari.
+            instances: [
+              { browser: 'chromium' },
+              { browser: 'firefox' },
+              { browser: 'webkit' },
+            ],
             viewport: { width: 1000, height: 700 },
             screenshotFailures: false,
           },

@@ -442,18 +442,26 @@ describe('<liana-select> colours', () => {
     await settled();
   }
 
-  it('highlights with the colour of the browser focus ring, lightened', async () => {
-    // The ring of a button reached with the keyboard.
-    document.querySelector<HTMLElement>('#before')?.focus();
-    await userEvent.tab();
-    await userEvent.tab({ shift: true });
-    const focused = document.activeElement;
-    if (focused === null) throw new Error('Nothing is focused');
-    expect(focused.id).toBe('before');
-    const ring = getComputedStyle(focused).outlineColor;
+  /**
+   * The colour each engine names for its focus ring: `-webkit-focus-ring-color`
+   * in Chromium and WebKit, the system `AccentColor` in Firefox, which draws its
+   * ring with it.
+   */
+  function browserRing(): string {
+    const probe = document.createElement('div');
+    if (CSS.supports('outline-color', '-webkit-focus-ring-color')) {
+      probe.style.outlineColor = '-webkit-focus-ring-color';
+      document.body.append(probe);
+      const colour = getComputedStyle(probe).outlineColor;
+      probe.remove();
+      return colour;
+    }
+    return computed('AccentColor');
+  }
 
-    await userEvent.tab();
-    await settled();
+  it('highlights with the colour of the browser focus ring, lightened', async () => {
+    const ring = browserRing();
+    await tabIn();
     expect(path()).toEqual(['Pizza?', '-']);
     // Half the ring colour, half the background of the field.
     expect(colours('Pizza').background).toBe(
@@ -461,6 +469,19 @@ describe('<liana-select> colours', () => {
     );
     // The focus ring itself is the browser's colour, unmixed.
     expect(getComputedStyle(select).outlineColor).toBe(ring);
+  });
+
+  it('matches the focus ring of a button, where the engine reports it', async () => {
+    // Only Chromium reports the colour it draws the ring with; Firefox and
+    // WebKit report the text colour for a ring drawn by the system.
+    if (!navigator.userAgent.includes('Chrome/')) return;
+    document.querySelector<HTMLElement>('#before')?.focus();
+    await userEvent.tab();
+    await userEvent.tab({ shift: true });
+    const focused = document.activeElement;
+    if (focused === null) throw new Error('Nothing is focused');
+    expect(focused.id).toBe('before');
+    expect(getComputedStyle(focused).outlineColor).toBe(browserRing());
   });
 
   it('shows selected items in a lighter tint of the same colour', async () => {
