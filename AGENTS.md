@@ -32,24 +32,29 @@ gesture. It must be usable in plain HTML and inside any framework.
   element) and `liana-select/core` (headless core). ESM only; Lit stays external.
   The package is `private` until publishing is decided.
 
+- Interaction design: specified in `docs/interaction-design.md`. It is the owner's
+  original design, not modelled on existing select components. Read it before
+  touching the gesture, the layout or the scrolling, and keep it up to date.
+- Data input: the tree is declared with nested `<liana-group label>` and
+  `<liana-option value>` child elements, not with native `<option>` / `<optgroup>`.
+- Input handling: Pointer Events with pointer capture and `touch-action: none`,
+  one code path for mouse, touch and pen.
+- Form-associated custom element (`ElementInternals`), so it behaves like a native
+  `<select>` inside a `<form>`.
+
 ## Proposed, not yet confirmed by the owner
 
 Discuss these before building on them:
 
-- Pointer Events with pointer capture and `touch-action: none`, one code path for
-  mouse, touch and pen.
-- Form-associated custom element (`ElementInternals`) so it behaves like a native
-  `<select>` inside a `<form>`.
-- Full keyboard navigation and ARIA roles designed from the start, since the
-  single gesture is not usable by everyone.
+- Full keyboard navigation and ARIA roles, since the single gesture is not usable
+  by everyone. Deferred: listed as to do in `docs/interaction-design.md`.
 - Theming through CSS custom properties and `::part`.
 
 ## Not yet defined: ask, do not invent
 
-- The interaction design of the single gesture (how levels open, how the user
-  moves between them, how a selection is committed or cancelled).
-- The data input format (attribute, property, slotted markup, or a mix).
-- Public API: attribute, property and event names.
+- Anything about the interaction that `docs/interaction-design.md` does not state.
+- Public API beyond what that document fixes: names of further attributes,
+  properties, events and CSS custom properties.
 - Browser tests for the element (proposed: Vitest browser mode with Playwright,
   added once the element has behaviour worth testing).
 - License (a MIT `LICENSE` file exists, but it is not confirmed), publishing and CI.
@@ -79,4 +84,6 @@ Discuss these before building on them:
 Scaffolded. `src/core/tree.ts` holds a minimal, provisional internal tree model
 (`TreeNode`, `NodePath`, `isLeaf`, `getNodeAtPath`, `findPathById`) with tests. It
 is not the public input format. `src/element/liana-select.ts` is a placeholder
-element with no public API. Next step: design the single gesture with the owner.
+element with no public API. The interaction design is written down in
+`docs/interaction-design.md`, with no open questions. Next step: implement it,
+starting from the core.
