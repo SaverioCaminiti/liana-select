@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>liana-select: pick from a tree in one gesture</title>
+    <meta
+      name="description"
+      content="liana-select is a web component for picking one option from a tree of categories with a single, swift gesture. Works in plain HTML and in any framework."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>"
+    />
+    <link rel="stylesheet" href="./site.css" />
+    <script type="module" src="./main.ts"></script>
+  </head>
+  <body>
+    <header class="page-header">
+      <p class="eyebrow">Web component</p>
+      <h1>liana-select</h1>
+      <p class="tagline">
+        Swing through a tree of options and select one in a single, swift gesture.
+      </p>
+      <nav aria-label="Sections">
+        <a href="#try">Try it</a>
+        <a href="#start">Getting started</a>
+        <a href="#examples">Examples</a>
+        <a href="#reference">Reference</a>
+        <a href="https://github.com/SaverioCaminiti/liana-select">GitHub</a>
+      </nav>
+    </header>
+
+    <main>
+      <section id="try">
+        <h2>Try it</h2>
+        <p>
+          <strong>Press</strong> on a category, <strong>slide right</strong> into its
+          column, keep going, and <strong>release</strong> on a dish. That is one gesture,
+          with a finger, a pen or the mouse. You can also tap one level at a time, and
+          slide back left to change an earlier choice.
+        </p>
+        <div class="example" data-plain>
+          <div class="example-live">
+            <liana-select id="hero" class="tall" data-menu></liana-select>
+          </div>
+        </div>
+      </section>
+
+      <section id="about">
+        <h2>What it is</h2>
+        <p>
+          <code>&lt;liana-select&gt;</code> is a select for options organised as a tree:
+          categories, subcategories, items. A native <code>&lt;select&gt;</code> flattens
+          the tree into one long list, and nested menus need a tap per level. Here each
+          level is a column, the next column opens while you are still pressing, and the
+          path your finger draws is the path through the tree.
+        </p>
+        <ul class="features">
+          <li>
+            <strong>One gesture or many taps.</strong> Both lead to the same result, so
+            nobody has to learn the gesture first.
+          </li>
+          <li>
+            <strong>Made to be large.</strong> It is closer to a textarea than to a
+            dropdown: on a tablet it can take most of the screen.
+          </li>
+          <li>
+            <strong>No scrollbars.</strong> A long column scrolls with the height of the
+            pointer, and deep trees shrink the columns on the left.
+          </li>
+          <li>
+            <strong>A real form control.</strong> It has a <code>name</code> and a
+            <code>value</code>, is submitted and reset with its form, and dispatches
+            <code>input</code> and <code>change</code>.
+          </li>
+          <li>
+            <strong>Plain HTML or any framework.</strong> It is a custom element, with no
+            framework of its own to bring along.
+          </li>
+        </ul>
+      </section>
+
+      <section id="start">
+        <h2>Getting started</h2>
+        <p>
+          Import the package once, anywhere in your page or app. That registers the three
+          elements.
+        </p>
+        <pre class="code"><code>import 'liana-select';</code></pre>
+        <p>
+          Then declare the tree with nested <code>&lt;liana-group&gt;</code> and
+          <code>&lt;liana-option&gt;</code> elements, and give the select a size:
+        </p>
+        <pre class="code"><code>&lt;liana-select name="dish" style="height: 24rem"&gt;
+  &lt;liana-group label="Pizza"&gt;
+    &lt;liana-option value="margherita"&gt;Margherita&lt;/liana-option&gt;
+    &lt;liana-option value="marinara"&gt;Marinara&lt;/liana-option&gt;
+  &lt;/liana-group&gt;
+  &lt;liana-option value="bread"&gt;Bread&lt;/liana-option&gt;
+&lt;/liana-select&gt;</code></pre>
+        <p>Read the value, or listen for it, as you would with a native select:</p>
+        <pre class="code"><code>const select = document.querySelector('liana-select');
+select.addEventListener('change', () =&gt; console.log(select.value));</code></pre>
+        <p class="note">
+          The package is not published to npm yet. Until it is, clone the
+          <a href="https://github.com/SaverioCaminiti/liana-select">repository</a>, run
+          <code>pnpm install</code> and <code>pnpm build</code>, and import
+          <code>dist/liana-select.js</code>. Its only dependency is
+          <a href="https://lit.dev/">Lit</a>.
+        </p>
+      </section>
+
+      <section id="examples">
+        <h2>Examples</h2>
+        <p>
+          Every example below is live, and the code under it is exactly the code that is
+          running.
+        </p>
+
+        <article class="example" id="example-basic">
+          <h3>A tree in markup</h3>
+          <p>
+            Groups can contain options and other groups, to any depth. The label of a
+            group is its <code>label</code> attribute, the label of an option is its text.
+          </p>
+          <div class="example-live">
+            <liana-select name="dish">
+              <liana-group label="Pizza">
+                <liana-option value="margherita">Margherita</liana-option>
+                <liana-option value="marinara">Marinara</liana-option>
+                <liana-group label="Special">
+                  <liana-option value="truffle">Truffle</liana-option>
+                  <liana-option value="seafood">Seafood</liana-option>
+                </liana-group>
+              </liana-group>
+              <liana-group label="Drinks">
+                <liana-option value="water">Water</liana-option>
+                <liana-option value="beer">Beer</liana-option>
+              </liana-group>
+              <liana-option value="bread">Bread</liana-option>
+            </liana-select>
+          </div>
+        </article>
+
+        <article class="example" id="example-form">
+          <h3>In a form</h3>
+          <p>
+            The value is submitted under the <code>name</code> of the select, and a reset
+            brings back the option marked <code>selected</code>, here <em>Water</em>.
+          </p>
+          <div class="example-live">
+            <form id="order">
+              <liana-select name="dish">
+                <liana-group label="Pizza">
+                  <liana-option value="margherita">Margherita</liana-option>
+                  <liana-option value="marinara">Marinara</liana-option>
+                </liana-group>
+                <liana-group label="Drinks">
+                  <liana-option value="water" selected>Water</liana-option>
+                  <liana-option value="beer">Beer</liana-option>
+                </liana-group>
+              </liana-select>
+              <p>
+                <button type="submit">Submit</button>
+                <button type="reset">Reset</button>
+                <output id="order-result"></output>
+              </p>
+            </form>
+          </div>
+          <script type="text/plain" data-lang="js">
+            const form = document.querySelector('#order');
+
+            form.addEventListener('submit', (event) => {
+              event.preventDefault();
+              const data = Object.fromEntries(new FormData(form));
+              document.querySelector('#order-result').textContent =
+                'Submitted: ' + JSON.stringify(data);
+            });
+          </script>
+        </article>
+
+        <article class="example" id="example-script">
+          <h3>Setting the value from a script</h3>
+          <p>
+            Setting <code>value</code> opens the whole path to that option. An empty
+            string clears the selection and goes back to the first column. Neither
+            dispatches events: those are for what the user does.
+          </p>
+          <div class="example-live">
+            <liana-select id="scripted">
+              <liana-group label="Pizza">
+                <liana-option value="margherita">Margherita</liana-option>
+                <liana-group label="Special">
+                  <liana-option value="truffle">Truffle</liana-option>
+                  <liana-option value="seafood">Seafood</liana-option>
+                </liana-group>
+              </liana-group>
+              <liana-group label="Drinks">
+                <liana-option value="water">Water</liana-option>
+                <liana-option value="beer">Beer</liana-option>
+              </liana-group>
+            </liana-select>
+            <p>
+              <button type="button" data-value="seafood">Select Seafood</button>
+              <button type="button" data-value="beer">Select Beer</button>
+              <button type="button" data-value="">Clear</button>
+            </p>
+          </div>
+          <script type="text/plain" data-lang="js">
+            const select = document.querySelector('#scripted');
+
+            for (const button of document.querySelectorAll('#example-script button')) {
+              button.addEventListener('click', () => {
+                select.value = button.dataset.value;
+              });
+            }
+          </script>
+        </article>
+
+        <article class="example" id="example-events">
+          <h3>Reacting to a choice</h3>
+          <p>
+            <code>input</code> and <code>change</code> are dispatched when a gesture ends
+            on a different value, never while the pointer is still down. Releasing on a
+            group clears the value. What happens next is up to you: this one adds the dish
+            to a cart, then clears the select for the next dish.
+          </p>
+          <div class="example-live">
+            <liana-select id="cart-select">
+              <liana-group label="Pizza">
+                <liana-option value="Margherita">Margherita</liana-option>
+                <liana-option value="Marinara">Marinara</liana-option>
+              </liana-group>
+              <liana-group label="Drinks">
+                <liana-option value="Water">Water</liana-option>
+                <liana-option value="Beer">Beer</liana-option>
+              </liana-group>
+              <liana-option value="Bread">Bread</liana-option>
+            </liana-select>
+            <p>Cart: <output id="cart">empty</output></p>
+          </div>
+          <script type="text/plain" data-lang="js">
+            const select = document.querySelector('#cart-select');
+            const cart = [];
+
+            select.addEventListener('change', () => {
+              if (select.value === '') return;
+              cart.push(select.value);
+              document.querySelector('#cart').textContent = cart.join(', ');
+              setTimeout(() => (select.value = ''), 600);
+            });
+          </script>
+        </article>
+
+        <article class="example" id="example-disabled">
+          <h3>Disabled items</h3>
+          <p>
+            A disabled option or group cannot be highlighted or selected. A group without
+            children behaves the same way. The whole select can be disabled too.
+          </p>
+          <div class="example-live">
+            <liana-select>
+              <liana-group label="Pizza">
+                <liana-option value="margherita">Margherita</liana-option>
+                <liana-option value="truffle" disabled>Truffle (sold out)</liana-option>
+              </liana-group>
+              <liana-group label="Desserts" disabled>
+                <liana-option value="tiramisu">Tiramisu</liana-option>
+              </liana-group>
+              <liana-group label="Specials of the day"></liana-group>
+              <liana-option value="bread">Bread</liana-option>
+            </liana-select>
+          </div>
+        </article>
+
+        <article class="example" id="example-long">
+          <h3>Long columns</h3>
+          <p>
+            There are no scrollbars. A column with more items than fit scrolls with the
+            height of the pointer: the top of the column shows the first item, the bottom
+            shows the last. Open <em>Red</em> and slide down. The more a column overflows,
+            the less travel each item gets, so keep columns reasonably short.
+          </p>
+          <div class="example-live">
+            <liana-select id="wines" style="height: 16rem">
+              <liana-group label="Red"></liana-group>
+              <liana-group label="White">
+                <liana-option value="white-1">White wine no. 1</liana-option>
+                <liana-option value="white-2">White wine no. 2</liana-option>
+              </liana-group>
+              <liana-option value="water">Sparkling water</liana-option>
+            </liana-select>
+          </div>
+          <script type="text/plain" data-lang="js">
+            // The select follows changes to its children: add forty red wines.
+            const red = document.querySelector('#wines liana-group');
+
+            for (let number = 1; number <= 40; number++) {
+              const option = document.createElement('liana-option');
+              option.value = 'red-' + number;
+              option.textContent = 'Red wine no. ' + number;
+              red.append(option);
+            }
+          </script>
+        </article>
+
+        <article class="example" id="example-narrow">
+          <h3>Deep trees in a narrow space</h3>
+          <p>
+            When the width allows it, the columns share it in equal parts, one per level
+            of the tree. When it does not, as here, the current column stays whole and the
+            ones on its left shrink: their text is clipped, never re-wrapped. Slide back
+            left over the shrunk columns to go back, one level at a time.
+          </p>
+          <div class="example-live">
+            <liana-select style="width: min(100%, 22rem)">
+              <liana-group label="Europe">
+                <liana-group label="Italy">
+                  <liana-group label="Lazio">
+                    <liana-option value="rome">Rome</liana-option>
+                    <liana-option value="viterbo">Viterbo</liana-option>
+                  </liana-group>
+                  <liana-group label="Tuscany">
+                    <liana-option value="florence">Florence</liana-option>
+                    <liana-option value="siena">Siena</liana-option>
+                  </liana-group>
+                </liana-group>
+                <liana-group label="France">
+                  <liana-group label="Provence">
+                    <liana-option value="marseille">Marseille</liana-option>
+                    <liana-option value="avignon">Avignon</liana-option>
+                  </liana-group>
+                </liana-group>
+              </liana-group>
+              <liana-group label="Asia">
+                <liana-group label="Japan">
+                  <liana-group label="Kansai">
+                    <liana-option value="kyoto">Kyoto</liana-option>
+                    <liana-option value="osaka">Osaka</liana-option>
+                  </liana-group>
+                </liana-group>
+              </liana-group>
+            </liana-select>
+          </div>
+        </article>
+
+        <article class="example" id="example-theme">
+          <h3>Styling</h3>
+          <p>
+            Size the element like any block. Colours and sizes are custom properties, and
+            columns and items are exposed as parts.
+          </p>
+          <div class="example-live">
+            <liana-select id="themed">
+              <liana-group label="Pizza">
+                <liana-option value="margherita">Margherita</liana-option>
+                <liana-option value="marinara">Marinara</liana-option>
+              </liana-group>
+              <liana-group label="Drinks">
+                <liana-option value="water">Water</liana-option>
+                <liana-option value="beer">Beer</liana-option>
+              </liana-group>
+              <liana-option value="bread">Bread</liana-option>
+            </liana-select>
+          </div>
+          <script type="text/plain" data-lang="css">
+            #themed {
+              height: 15rem;
+              border: 2px solid #b26a00;
+              border-radius: 14px;
+              --liana-item-min-height: 3.5rem;
+              --liana-highlight-color: color-mix(in srgb, #ffc400 45%, Field);
+              --liana-selected-color: color-mix(in srgb, #ff7a00 45%, Field);
+            }
+
+            #themed::part(item) {
+              font-weight: 600;
+              letter-spacing: 0.02em;
+            }
+          </script>
+        </article>
+      </section>
+
+      <section id="reference">
+        <h2>Reference</h2>
+
+        <h3><code>&lt;liana-select&gt;</code></h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Attribute</th>
+                <th>Property</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>name</code></td>
+                <td><code>name</code></td>
+                <td>Name under which the value is submitted with the form.</td>
+              </tr>
+              <tr>
+                <td><code>value</code></td>
+                <td><code>value</code></td>
+                <td>
+                  Value of the selected option, or an empty string. Setting it selects the
+                  option with that value; a value that no option has yet is applied when
+                  the option appears.
+                </td>
+              </tr>
+              <tr>
+                <td><code>disabled</code></td>
+                <td><code>disabled</code></td>
+                <td>
+                  Ignores the pointer and is not submitted, as for any form control.
+                </td>
+              </tr>
+              <tr>
+                <td></td>
+                <td><code>form</code></td>
+                <td>Read only. The form the element belongs to, if any.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Event</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>input</code>, <code>change</code></td>
+                <td>
+                  A gesture ended on a value different from the one it started with. Both
+                  bubble. Read the new value from <code>event.target.value</code>.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><code>&lt;liana-group&gt;</code></h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Attribute</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>label</code></td>
+                <td>Text shown for the group.</td>
+              </tr>
+              <tr>
+                <td><code>disabled</code></td>
+                <td>The group cannot be opened.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><code>&lt;liana-option&gt;</code></h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Attribute</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>value</code></td>
+                <td>
+                  Value of the select when this option is chosen. Defaults to the label.
+                </td>
+              </tr>
+              <tr>
+                <td><code>label</code></td>
+                <td>Text shown for the option. Defaults to its text content.</td>
+              </tr>
+              <tr>
+                <td><code>selected</code></td>
+                <td>
+                  Marks the initial selection, also restored by a form reset. If several
+                  options have it, the last one wins.
+                </td>
+              </tr>
+              <tr>
+                <td><code>disabled</code></td>
+                <td>The option cannot be selected.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          All the attributes of groups and options are also available as properties with
+          the same name.
+        </p>
+
+        <h3>Styling</h3>
+        <p>
+          The element is a block, <code>20rem</code> tall unless you size it. It follows
+          the light or dark colour scheme of the page.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Custom property</th>
+                <th>Default</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>--liana-item-min-height</code></td>
+                <td><code>2.75rem</code></td>
+                <td>
+                  Minimum height of an item. Items grow to share the height of the column.
+                </td>
+              </tr>
+              <tr>
+                <td><code>--liana-item-max-height</code></td>
+                <td><code>none</code></td>
+                <td>Maximum height of an item.</td>
+              </tr>
+              <tr>
+                <td><code>--liana-column-min-width</code></td>
+                <td><code>10rem</code></td>
+                <td>
+                  Minimum width of a column. Below it, the columns on the left shrink.
+                </td>
+              </tr>
+              <tr>
+                <td><code>--liana-column-collapsed-min-width</code></td>
+                <td><code>4rem</code></td>
+                <td>Minimum width of a shrunk column.</td>
+              </tr>
+              <tr>
+                <td><code>--liana-highlight-color</code></td>
+                <td>blue tint</td>
+                <td>Background of the item under the pointer.</td>
+              </tr>
+              <tr>
+                <td><code>--liana-selected-color</code></td>
+                <td>green tint</td>
+                <td>Background of a selected item.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Part</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>::part(column)</code></td>
+                <td>A column of items.</td>
+              </tr>
+              <tr>
+                <td><code>::part(item)</code></td>
+                <td>An option or a group.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Good to know</h3>
+        <ul>
+          <li>
+            There is no keyboard navigation and there are no ARIA roles yet, so the
+            element cannot be used without a pointer. Both are planned.
+          </li>
+          <li>
+            The element takes over every touch that starts on it, so the page cannot be
+            scrolled by dragging on it. Leave some room around it.
+          </li>
+          <li>Right-to-left layouts are not supported yet.</li>
+        </ul>
+      </section>
+    </main>
+
+    <footer class="page-footer">
+      <p>
+        <a href="https://github.com/SaverioCaminiti/liana-select">Source on GitHub</a>
+        ·
+        <a href="https://github.com/SaverioCaminiti/liana-select/blob/main/CHANGES.md"
+          >Changes</a
+        >
+        ·
+        <a
+          href="https://github.com/SaverioCaminiti/liana-select/blob/main/docs/interaction-design.md"
+          >Interaction design</a
+        >
+      </p>
+    </footer>
+  </body>
+</html>

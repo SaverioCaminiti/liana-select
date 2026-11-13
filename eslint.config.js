@@ -6,7 +6,7 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['dist/', 'node_modules/'] },
+  { ignores: ['dist/', 'dist-site/', 'node_modules/'] },
   js.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,
@@ -16,7 +16,12 @@ export default tseslint.config(
         projectService: {
           // Tooling files are not part of tsconfig.json; type-check them with
           // the Node config instead.
-          allowDefaultProject: ['eslint.config.js', 'vite.config.ts', 'vitest.config.ts'],
+          allowDefaultProject: [
+            'eslint.config.js',
+            'vite.config.ts',
+            'vite.site.config.ts',
+            'vitest.config.ts',
+          ],
           defaultProject: 'tsconfig.node.json',
         },
         tsconfigRootDir: import.meta.dirname,
@@ -24,11 +29,11 @@ export default tseslint.config(
     },
   },
   {
-    files: ['src/element/**/*.ts', 'src/index.ts', 'demo/**/*.ts'],
+    files: ['src/element/**/*.ts', 'src/index.ts', 'demo/**/*.ts', 'site/**/*.ts'],
     ...lit.configs['flat/recommended'],
   },
   {
-    files: ['src/element/**/*.ts', 'src/index.ts', 'demo/**/*.ts'],
+    files: ['src/element/**/*.ts', 'src/index.ts', 'demo/**/*.ts', 'site/**/*.ts'],
     ...wc.configs['flat/recommended'],
   },
   {

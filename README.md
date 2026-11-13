@@ -7,6 +7,9 @@ hierarchical list (categories, subcategories, items). Like a liana, it lets you 
 through the tree in one continuous motion: on touch screens a selection can be made
 with a single gesture.
 
+**Documentation and live examples:**
+[saveriocaminiti.github.io/liana-select](https://saveriocaminiti.github.io/liana-select/)
+
 ## Status
 
 Version 1.0.0: the interaction works with mouse, touch and pen. Keyboard
@@ -78,6 +81,7 @@ The full behaviour is specified in
 pnpm install
 pnpm exec playwright install --only-shell chromium  # once, for the browser tests
 pnpm dev           # demo page with hot reload
+pnpm site:dev      # documentation site with hot reload
 pnpm test          # core tests, in Node
 pnpm test:browser  # element tests, in headless Chromium
 pnpm typecheck && pnpm lint && pnpm build
