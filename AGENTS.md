@@ -67,6 +67,9 @@ Discuss these before building on them:
 - Branching follows git-flow: `main` is production, `develop` is integration,
   with the default prefixes `feature/`, `release/`, `hotfix/`, `support/` and no
   version tag prefix. Do not commit directly to `main`.
+- Releases are made with `git flow release`. On the release branch, set the
+  version in `package.json` and describe the release in `CHANGES.md`, which lists
+  what changed between one release and the next, newest first.
 
 ## Commands
 
@@ -83,7 +86,8 @@ Discuss these before building on them:
 
 ## Current status
 
-The interaction designed in `docs/interaction-design.md` is implemented.
+Version 1.0.0 is released: the interaction designed in
+`docs/interaction-design.md` is implemented.
 
 - `src/core`: `tree.ts` (model), `navigation.ts` (selected path and highlight),
   `scroll.ts` (anchored vertical scroll), `layout.ts` (column widths),

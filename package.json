@@ -1,6 +1,6 @@
 {
   "name": "liana-select",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Swing through a tree of options and select one in a single, swift gesture.",
   "type": "module",
