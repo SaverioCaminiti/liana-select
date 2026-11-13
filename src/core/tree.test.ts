@@ -1,78 +1,92 @@
 import { describe, expect, it } from 'vitest';
-import { findPathById, getNodeAtPath, isLeaf, type TreeNode } from './tree';
+import { group, menu, option } from './test-fixtures';
+import {
+  findPathByValue,
+  getChildrenAt,
+  getNodeAtPath,
+  isEnabled,
+  treeDepth,
+} from './tree';
 
-const fruit: TreeNode = {
-  id: 'fruit',
-  label: 'Fruit',
-  children: [
-    { id: 'apple', label: 'Apple' },
-    {
-      id: 'citrus',
-      label: 'Citrus',
-      children: [
-        { id: 'lemon', label: 'Lemon' },
-        { id: 'orange', label: 'Orange' },
-      ],
-    },
-  ],
-};
-
-const tree: readonly TreeNode[] = [
-  fruit,
-  { id: 'empty', label: 'Empty category', children: [] },
-];
-
-describe('isLeaf', () => {
-  it('is true for a node without children', () => {
-    expect(isLeaf({ id: 'a', label: 'A' })).toBe(true);
+describe('isEnabled', () => {
+  it('is true for a plain option and for a group with children', () => {
+    expect(isEnabled(option('a'))).toBe(true);
+    expect(isEnabled(group('g', [option('a')]))).toBe(true);
   });
 
-  it('is true for a node with an empty children list', () => {
-    expect(isLeaf({ id: 'a', label: 'A', children: [] })).toBe(true);
+  it('is false for disabled nodes', () => {
+    expect(isEnabled(option('a', { disabled: true }))).toBe(false);
+    expect(isEnabled(group('g', [option('a')], { disabled: true }))).toBe(false);
   });
 
-  it('is false for a node with children', () => {
-    expect(isLeaf(fruit)).toBe(false);
+  it('is false for a group without children', () => {
+    expect(isEnabled(group('g', []))).toBe(false);
+  });
+});
+
+describe('getChildrenAt', () => {
+  it('returns the roots for the empty path', () => {
+    expect(getChildrenAt(menu, [])).toBe(menu);
+  });
+
+  it('returns the children of a nested group', () => {
+    expect(getChildrenAt(menu, [0, 1])?.map((node) => node.label)).toEqual([
+      'truffle',
+      'seafood',
+    ]);
+  });
+
+  it('returns undefined when the path leads to an option or nowhere', () => {
+    expect(getChildrenAt(menu, [2])).toBeUndefined();
+    expect(getChildrenAt(menu, [9])).toBeUndefined();
+    expect(getChildrenAt(menu, [0, 0, 0])).toBeUndefined();
   });
 });
 
 describe('getNodeAtPath', () => {
-  it('returns a root node', () => {
-    expect(getNodeAtPath(tree, [1])?.id).toBe('empty');
+  it('returns root and nested nodes', () => {
+    expect(getNodeAtPath(menu, [2])?.label).toBe('bread');
+    expect(getNodeAtPath(menu, [0, 1, 1])?.label).toBe('seafood');
   });
 
-  it('returns a deeply nested node', () => {
-    expect(getNodeAtPath(tree, [0, 1, 1])?.id).toBe('orange');
-  });
-
-  it('returns undefined for the empty path', () => {
-    expect(getNodeAtPath(tree, [])).toBeUndefined();
-  });
-
-  it('returns undefined when an index is out of range', () => {
-    expect(getNodeAtPath(tree, [0, 5])).toBeUndefined();
-  });
-
-  it('returns undefined when the path goes below a leaf', () => {
-    expect(getNodeAtPath(tree, [0, 0, 0])).toBeUndefined();
+  it('returns undefined for the empty path and for missing nodes', () => {
+    expect(getNodeAtPath(menu, [])).toBeUndefined();
+    expect(getNodeAtPath(menu, [0, 5])).toBeUndefined();
+    expect(getNodeAtPath(menu, [2, 0])).toBeUndefined();
   });
 });
 
-describe('findPathById', () => {
-  it('finds a nested node', () => {
-    expect(findPathById(tree, 'lemon')).toEqual([0, 1, 0]);
+describe('findPathByValue', () => {
+  it('finds root and nested options', () => {
+    expect(findPathByValue(menu, 'bread')).toEqual([2]);
+    expect(findPathByValue(menu, 'seafood')).toEqual([0, 1, 1]);
   });
 
-  it('finds a root node', () => {
-    expect(findPathById(tree, 'empty')).toEqual([1]);
+  it('does not match group labels', () => {
+    expect(findPathByValue(menu, 'pizza')).toBeUndefined();
   });
 
-  it('returns undefined for an unknown id', () => {
-    expect(findPathById(tree, 'banana')).toBeUndefined();
+  it('returns undefined for an unknown value', () => {
+    expect(findPathByValue(menu, 'sushi')).toBeUndefined();
   });
 
   it('is the inverse of getNodeAtPath', () => {
-    const path = findPathById(tree, 'orange') ?? [];
-    expect(getNodeAtPath(tree, path)?.id).toBe('orange');
+    const path = findPathByValue(menu, 'water') ?? [];
+    expect(getNodeAtPath(menu, path)).toEqual(option('water'));
+  });
+});
+
+describe('treeDepth', () => {
+  it('is 0 for an empty tree and 1 for a flat list', () => {
+    expect(treeDepth([])).toBe(0);
+    expect(treeDepth([option('a'), option('b')])).toBe(1);
+  });
+
+  it('counts the levels of the deepest branch', () => {
+    expect(treeDepth(menu)).toBe(3);
+  });
+
+  it('counts an empty group as one level', () => {
+    expect(treeDepth([group('g', [])])).toBe(1);
   });
 });
