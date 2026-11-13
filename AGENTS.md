@@ -104,7 +104,7 @@ them.
 
 ## Current status
 
-Version 1.2.0 is released: the interaction designed in
+Version 1.3.0 is released: the interaction designed in
 `docs/interaction-design.md` is implemented, keyboard and ARIA included.
 
 - `src/core`: `tree.ts` (model), `navigation.ts` (selected path, highlight and

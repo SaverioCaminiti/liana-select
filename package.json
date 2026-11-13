@@ -1,6 +1,6 @@
 {
   "name": "liana-select",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Swing through a tree of options and select one in a single, swift gesture.",
   "keywords": [
     "web-component",

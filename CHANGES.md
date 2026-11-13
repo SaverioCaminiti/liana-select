@@ -3,7 +3,7 @@
 What changed in each release of `liana-select`, newest first. Version numbers
 follow [semantic versioning](https://semver.org/).
 
-## Unreleased
+## 1.3.0 - 2026-11-13
 
 ### Added
 
@@ -16,6 +16,14 @@ follow [semantic versioning](https://semver.org/).
   the builds run on every push and pull request.
 - The element tests run on Firefox and WebKit too, not only on Chromium.
 - `docs/releasing.md`, with the release and publication procedure.
+
+### Known limitations
+
+- The element takes over every touch on it, so the page cannot be scrolled by
+  dragging on it.
+- The search by label looks in the column of the cursor only.
+- No right-to-left layout, and no transitions when columns appear or resize.
+- Not tried yet with every screen reader.
 
 ## 1.2.0 - 2026-11-13
 
