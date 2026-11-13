@@ -38,7 +38,9 @@
           <strong>Press</strong> on a category, <strong>slide right</strong> into its
           column, keep going, and <strong>release</strong> on a dish. That is one gesture,
           with a finger, a pen or the mouse. You can also tap one level at a time, and
-          slide back left to change an earlier choice.
+          slide back left to change an earlier choice. With the keyboard,
+          <kbd>Tab</kbd> into it, move with the arrow keys and confirm with
+          <kbd>Enter</kbd>.
         </p>
         <div class="example" data-plain>
           <div class="example-live">
@@ -73,6 +75,10 @@
             <strong>A real form control.</strong> It has a <code>name</code> and a
             <code>value</code>, is submitted and reset with its form, and dispatches
             <code>input</code> and <code>change</code>.
+          </li>
+          <li>
+            <strong>Keyboard and screen readers.</strong> It is one tab stop, works with
+            the arrow keys, and is announced as a tree.
           </li>
           <li>
             <strong>Plain HTML or any framework.</strong> It is a custom element, with no
@@ -345,11 +351,38 @@ select.addEventListener('change', () =&gt; console.log(select.value));</code></p
           </div>
         </article>
 
+        <article class="example" id="example-keyboard">
+          <h3>With the keyboard</h3>
+          <p>
+            Click the button, then press <kbd>Tab</kbd>: the select shows the same focus
+            ring as the other inputs of the page, and a cursor. The arrow keys move it,
+            and nothing changes until <kbd>Enter</kbd> confirms an option.
+            <kbd>Escape</kbd>, or leaving with <kbd>Tab</kbd>, restores the previous
+            choice. Type the first letters of a label to jump to it.
+          </p>
+          <div class="example-live">
+            <p><button type="button">Start here</button></p>
+            <liana-select aria-label="Drink">
+              <liana-group label="Coffee">
+                <liana-option value="espresso">Espresso</liana-option>
+                <liana-option value="cappuccino">Cappuccino</liana-option>
+                <liana-option value="latte">Latte</liana-option>
+              </liana-group>
+              <liana-group label="Tea">
+                <liana-option value="green">Green tea</liana-option>
+                <liana-option value="black">Black tea</liana-option>
+              </liana-group>
+              <liana-option value="water">Water</liana-option>
+            </liana-select>
+          </div>
+        </article>
+
         <article class="example" id="example-theme">
           <h3>Styling</h3>
           <p>
-            Size the element like any block. Colours and sizes are custom properties, and
-            columns and items are exposed as parts.
+            Size the element like any block. By default its colours come from the focus
+            ring of the browser, so they match the other inputs of the page; one custom
+            property changes them all. Columns and items are exposed as parts.
           </p>
           <div class="example-live">
             <liana-select id="themed">
@@ -370,8 +403,7 @@ select.addEventListener('change', () =&gt; console.log(select.value));</code></p
               border: 2px solid #b26a00;
               border-radius: 14px;
               --liana-item-min-height: 3.5rem;
-              --liana-highlight-color: color-mix(in srgb, #ffc400 45%, Field);
-              --liana-selected-color: color-mix(in srgb, #ff7a00 45%, Field);
+              --liana-accent-color: #c25e00;
             }
 
             #themed::part(item) {
@@ -437,13 +469,75 @@ select.addEventListener('change', () =&gt; console.log(select.value));</code></p
               <tr>
                 <td><code>input</code>, <code>change</code></td>
                 <td>
-                  A gesture ended on a value different from the one it started with. Both
-                  bubble. Read the new value from <code>event.target.value</code>.
+                  A gesture, or a keyboard navigation confirmed with <kbd>Enter</kbd>,
+                  ended on a value different from the one it started with. Both bubble.
+                  Read the new value from <code>event.target.value</code>.
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
+
+        <h3>Keyboard</h3>
+        <p>
+          The select is one tab stop. A cursor, shown like the item under the pointer,
+          moves within the columns; nothing changes until an option is confirmed.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Key</th>
+                <th>Effect</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><kbd>↓</kbd> <kbd>↑</kbd></td>
+                <td>Next or previous item of the column. Disabled items are skipped.</td>
+              </tr>
+              <tr>
+                <td><kbd>Home</kbd> <kbd>End</kbd></td>
+                <td>First or last item of the column.</td>
+              </tr>
+              <tr>
+                <td><kbd>→</kbd></td>
+                <td>Into the group under the cursor, on its first item.</td>
+              </tr>
+              <tr>
+                <td><kbd>←</kbd></td>
+                <td>Back to the previous column, on the group it came from.</td>
+              </tr>
+              <tr>
+                <td><kbd>Enter</kbd> <kbd>Space</kbd></td>
+                <td>
+                  On an option: select it, set the value and dispatch the events. On a
+                  group: like <kbd>→</kbd>.
+                </td>
+              </tr>
+              <tr>
+                <td><kbd>Escape</kbd></td>
+                <td>Restore the selection from before the keys, and hide the cursor.</td>
+              </tr>
+              <tr>
+                <td>Letters</td>
+                <td>
+                  Jump to the next item of the column whose label starts with the letters
+                  typed.
+                </td>
+              </tr>
+              <tr>
+                <td><kbd>Tab</kbd></td>
+                <td>Leave, restoring the selection if nothing was confirmed.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          For assistive technology the select is a tree: each item is announced with its
+          level, its position, and whether it is expanded or selected. Name it with an
+          <code>aria-label</code> or with a <code>&lt;label for&gt;</code>.
+        </p>
 
         <h3><code>&lt;liana-group&gt;</code></h3>
         <div class="table-wrap">
@@ -546,14 +640,27 @@ select.addEventListener('change', () =&gt; console.log(select.value));</code></p
                 <td>Minimum width of a shrunk column.</td>
               </tr>
               <tr>
-                <td><code>--liana-highlight-color</code></td>
-                <td>blue tint</td>
-                <td>Background of the item under the pointer.</td>
+                <td><code>--liana-accent-color</code></td>
+                <td>focus ring</td>
+                <td>
+                  Base of the colours below, and of the focus ring. By default the colour
+                  of the browser's own focus ring.
+                </td>
               </tr>
               <tr>
                 <td><code>--liana-selected-color</code></td>
-                <td>green tint</td>
+                <td>accent</td>
                 <td>Background of a selected item.</td>
+              </tr>
+              <tr>
+                <td><code>--liana-selected-text-color</code></td>
+                <td>black or white</td>
+                <td>Text of a selected item, whichever contrasts more.</td>
+              </tr>
+              <tr>
+                <td><code>--liana-highlight-color</code></td>
+                <td>light accent</td>
+                <td>Background of the item under the pointer or the cursor.</td>
               </tr>
             </tbody>
           </table>
@@ -581,10 +688,6 @@ select.addEventListener('change', () =&gt; console.log(select.value));</code></p
 
         <h3>Good to know</h3>
         <ul>
-          <li>
-            There is no keyboard navigation and there are no ARIA roles yet, so the
-            element cannot be used without a pointer. Both are planned.
-          </li>
           <li>
             The element takes over every touch that starts on it, so the page cannot be
             scrolled by dragging on it. Leave some room around it.
