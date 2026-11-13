@@ -1,0 +1,10 @@
+{
+  // The core must not depend on the DOM: without the DOM lib, any use of
+  // document, window, HTMLElement and similar is a compile error.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2022"],
+    "types": []
+  },
+  "include": ["src/core"]
+}

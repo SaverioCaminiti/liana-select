@@ -1,0 +1,59 @@
+{
+  "name": "liana-select",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Swing through a tree of options and select one in a single, swift gesture.",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/liana-select.js",
+  "module": "./dist/liana-select.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/liana-select.js"
+    },
+    "./core": {
+      "types": "./dist/core/index.d.ts",
+      "import": "./dist/core.js"
+    }
+  },
+  "sideEffects": [
+    "./dist/liana-select.js",
+    "./src/index.ts"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && tsc -p tsconfig.build.json",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.core.json && tsc -p tsconfig.json && tsc -p tsconfig.node.json",
+    "test": "vitest run --project core",
+    "test:watch": "vitest --project core",
+    "test:browser": "vitest run --project browser",
+    "test:all": "vitest run",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "lit": "^3.3.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.20.5",
+    "@vitest/browser-playwright": "^5.1.0",
+    "eslint": "^10.14.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-lit": "^2.3.1",
+    "eslint-plugin-wc": "^3.1.0",
+    "globals": "^17.14.0",
+    "playwright": "^1.65.0",
+    "prettier": "^3.10.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.2",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0"
+  }
+}
