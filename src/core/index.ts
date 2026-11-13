@@ -6,10 +6,21 @@ export {
   isEnabled,
   treeDepth,
 } from './tree';
-export type { ColumnRole, ItemState, NavColumn, NavState } from './navigation';
+export type {
+  ColumnRole,
+  CursorMove,
+  ItemState,
+  NavColumn,
+  NavState,
+} from './navigation';
 export {
   currentColumnIndex,
   EMPTY_NAV_STATE,
+  enterGroup,
+  findByPrefix,
+  goBack,
+  moveCursor,
+  placeCursor,
   pointAt,
   release,
   stateForValue,
@@ -26,5 +37,6 @@ export type {
   ControllerOptions,
   ControllerView,
   ItemView,
+  KeyboardAction,
 } from './controller';
 export { columnKey, DEFAULT_CONTROLLER_OPTIONS, LianaController } from './controller';

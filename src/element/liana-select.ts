@@ -3,11 +3,15 @@ import { customElement, property, query } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
 import { styleMap } from 'lit/directives/style-map.js';
 import {
+  isEnabled,
   LianaController,
   type ColumnMetrics,
   type ColumnView,
   type ItemView,
+  type KeyboardAction,
+  type NodePath,
 } from '../core/index';
+import { contrastingText } from './contrast';
 import './liana-group';
 import './liana-option';
 import { readTree } from './read-tree';
@@ -18,6 +22,29 @@ const MAX_MEASURE_PASSES = 10;
 /** Attributes of the child elements that change the tree. */
 const TREE_ATTRIBUTES = ['value', 'label', 'disabled', 'selected'];
 
+/** Keys that drive the keyboard cursor. Letters drive the search by label. */
+const KEY_ACTIONS: Partial<Record<string, KeyboardAction>> = {
+  ArrowDown: 'next',
+  ArrowUp: 'previous',
+  Home: 'first',
+  End: 'last',
+  ArrowRight: 'enter',
+  ArrowLeft: 'back',
+  Enter: 'confirm',
+  ' ': 'confirm',
+  Escape: 'cancel',
+};
+
+/** How long typed letters keep adding up to one search, in milliseconds. */
+const TYPEAHEAD_TIMEOUT = 500;
+
+/** Accent colour when the browser tells none. */
+const FALLBACK_ACCENT = '#0075ff';
+
+function itemId(path: NodePath): string {
+  return `item-${path.join('-')}`;
+}
+
 /**
  * `<liana-select>`: a select for picking one option from a tree, with a single
  * gesture or with one tap per level.
@@ -26,9 +53,12 @@ const TREE_ATTRIBUTES = ['value', 'label', 'disabled', 'selected'];
  * children. Inside a `<form>` it behaves like a native `<select>`: it has a
  * `name`, a `value`, and dispatches `input` and `change`.
  *
+ * It can be used with a pointer, with a single gesture or one tap per level,
+ * and with the keyboard. For assistive technology it is a tree.
+ *
  * All the behaviour lives in the core (`LianaController`). This element reads
- * the markup, measures the DOM, forwards pointer events and draws the view.
- * See `docs/interaction-design.md`.
+ * the markup, measures the DOM, forwards pointer and keyboard events and draws
+ * the view. See `docs/interaction-design.md`.
  *
  * @fires input - The user selected a different value.
  * @fires change - The user selected a different value.
@@ -40,12 +70,30 @@ const TREE_ATTRIBUTES = ['value', 'label', 'disabled', 'selected'];
  * @cssprop --liana-item-max-height - Maximum height of an item.
  * @cssprop --liana-column-min-width - Minimum width of a column that is not shrunk.
  * @cssprop --liana-column-collapsed-min-width - Minimum width of a shrunk column.
- * @cssprop --liana-highlight-color - Background of the item under the pointer.
- * @cssprop --liana-selected-color - Background of a selected item.
+ * @cssprop --liana-accent-color - Base colour of the focus ring, the highlighted
+ *   and the selected items. Defaults to the colour of the browser's focus ring.
+ * @cssprop --liana-highlight-color - Background of the item under the pointer or
+ *   the keyboard cursor. Defaults to the accent colour mixed half and half with
+ *   the background of the field.
+ * @cssprop --liana-highlight-text-color - Text of the item under the pointer or
+ *   the keyboard cursor. Defaults to black or white, whichever contrasts more
+ *   with its background.
+ * @cssprop --liana-selected-color - Background of a selected item. Defaults to a
+ *   light tint of the accent colour.
  */
 @customElement('liana-select')
 export class LianaSelect extends LitElement {
   static readonly formAssociated = true;
+
+  // Focusing the element, with Tab or `focus()`, focuses the tree inside it.
+  static override shadowRootOptions: ShadowRootInit = {
+    ...LitElement.shadowRootOptions,
+    delegatesFocus: true,
+  };
+
+  static override get observedAttributes(): string[] {
+    return [...super.observedAttributes, 'aria-label', 'disabled'];
+  }
 
   static override styles = css`
     :host {
@@ -66,6 +114,17 @@ export class LianaSelect extends LitElement {
       touch-action: none;
       /* Thin lines between columns and between items. */
       --_liana-divider: color-mix(in srgb, currentColor 15%, transparent);
+      /* The system accent is measured at runtime: see #updateTheme. */
+      --_liana-accent: var(--liana-accent-color, var(--_liana-system-accent, #0075ff));
+      --_liana-highlight: var(
+        --liana-highlight-color,
+        color-mix(in srgb, var(--_liana-accent) 50%, Field)
+      );
+    }
+
+    /* The same ring as the other inputs of the page, when reached with the keyboard. */
+    :host(:state(focus-visible)) {
+      outline: var(--_liana-accent) auto 1px;
     }
 
     :host(:disabled) {
@@ -77,6 +136,8 @@ export class LianaSelect extends LitElement {
       display: flex;
       height: 100%;
       overflow: hidden;
+      /* The ring is drawn around the host instead. */
+      outline: none;
     }
 
     .column {
@@ -121,12 +182,17 @@ export class LianaSelect extends LitElement {
       border-top: 1px solid var(--_liana-divider);
     }
 
+    /* The item under the pointer or the cursor stands out the most. */
     .item[data-state='highlighted'] {
-      background: var(--liana-highlight-color, color-mix(in srgb, #2f9bff 35%, Field));
+      background: var(--_liana-highlight);
+      color: var(--liana-highlight-text-color, var(--_liana-on-highlight, #fff));
     }
 
     .item[data-state='selected'] {
-      background: var(--liana-selected-color, color-mix(in srgb, #35b558 40%, Field));
+      background: var(
+        --liana-selected-color,
+        color-mix(in srgb, var(--_liana-accent) 28%, Field)
+      );
     }
 
     .label {
@@ -162,6 +228,16 @@ export class LianaSelect extends LitElement {
     .probe-collapsed {
       width: var(--liana-column-collapsed-min-width, 4rem);
     }
+
+    /* Tells the colour of the browser's focus ring, where it has a name for it. */
+    .probe-ring {
+      outline-color: -webkit-focus-ring-color;
+    }
+
+    /* Tells the background of the highlighted item, to pick a text colour for it. */
+    .probe-highlight {
+      color: var(--_liana-highlight);
+    }
   `;
 
   readonly #internals = this.attachInternals();
@@ -181,10 +257,23 @@ export class LianaSelect extends LitElement {
   #pointerId: number | undefined;
   /** Measurements taken since the browser last ran a task. */
   #measurePasses = 0;
+  /** Letters typed for the search by label, and the timer that clears them. */
+  #typed = '';
+  #typedTimer: ReturnType<typeof setTimeout> | undefined;
+  /** Colours measured at runtime, in a style sheet of their own. */
+  readonly #themeSheet = new CSSStyleSheet();
+  #themeRules = '';
+  /** The browser's focus ring, and so the accent, changes with the colour scheme. */
+  readonly #darkScheme = matchMedia('(prefers-color-scheme: dark)');
+  readonly #onSchemeChange = (): void => {
+    this.#updateTheme();
+  };
 
   @query('.columns') private _columns!: HTMLElement | null;
   @query('.probe-min') private _minProbe!: HTMLElement | null;
   @query('.probe-collapsed') private _collapsedProbe!: HTMLElement | null;
+  @query('.probe-ring') private _ringProbe!: HTMLElement | null;
+  @query('.probe-highlight') private _highlightProbe!: HTMLElement | null;
 
   constructor() {
     super();
@@ -245,6 +334,7 @@ export class LianaSelect extends LitElement {
       attributeFilter: TREE_ATTRIBUTES,
     });
     this.#resizeObserver.observe(this);
+    this.#darkScheme.addEventListener('change', this.#onSchemeChange);
     this.#readTree();
   }
 
@@ -252,7 +342,25 @@ export class LianaSelect extends LitElement {
     super.disconnectedCallback();
     this.#treeObserver.disconnect();
     this.#resizeObserver.disconnect();
+    this.#darkScheme.removeEventListener('change', this.#onSchemeChange);
     this.#cancelGesture();
+    this.#controller.keyboardBlur();
+  }
+
+  override attributeChangedCallback(
+    name: string,
+    old: string | null,
+    value: string | null,
+  ): void {
+    super.attributeChangedCallback(name, old, value);
+    // The accessible name and the focusability depend on these.
+    if (name === 'aria-label' || name === 'disabled') this.requestUpdate();
+  }
+
+  /** Called by the browser when the element, or its fieldset, is disabled or enabled. */
+  formDisabledCallback(disabled: boolean): void {
+    if (disabled) this.#controller.keyboardBlur();
+    this.requestUpdate();
   }
 
   /** Called by the browser when the form is reset: back to the markup default. */
@@ -268,24 +376,42 @@ export class LianaSelect extends LitElement {
   }
 
   protected override render(): TemplateResult {
-    const { columns } = this.#controller.view;
+    const view = this.#controller.view;
+    const disabled = this.matches(':disabled');
+    // The item that the screen reader reads as focused: the cursor, otherwise
+    // the selected option.
+    const active =
+      view.cursor ??
+      view.columns
+        .flatMap((column) => column.items)
+        .find((item) => item.node.kind === 'option' && item.state === 'selected')?.path;
     return html`
       <div
         class="columns"
+        role="tree"
+        tabindex=${disabled ? -1 : 0}
+        aria-label=${this.#accessibleName() ?? nothing}
+        aria-disabled=${disabled ? 'true' : nothing}
+        aria-activedescendant=${active === undefined ? nothing : itemId(active)}
         @pointerdown=${this.#onPointerDown}
         @pointermove=${this.#onPointerMove}
         @pointerup=${this.#onPointerUp}
         @pointercancel=${this.#onPointerCancel}
         @lostpointercapture=${this.#onPointerCancel}
+        @keydown=${this.#onKeyDown}
+        @focus=${this.#onFocus}
+        @blur=${this.#onBlur}
       >
         ${repeat(
-          columns,
+          view.columns,
           (column) => column.key,
           (column) => this.#renderColumn(column),
         )}
       </div>
-      <div class="probe probe-min"></div>
-      <div class="probe probe-collapsed"></div>
+      <div class="probe probe-min" aria-hidden="true"></div>
+      <div class="probe probe-collapsed" aria-hidden="true"></div>
+      <div class="probe probe-ring" aria-hidden="true"></div>
+      <div class="probe probe-highlight" aria-hidden="true"></div>
     `;
   }
 
@@ -294,40 +420,103 @@ export class LianaSelect extends LitElement {
       <div
         class="column"
         part="column"
+        role="none"
         data-key=${column.key}
         data-role=${column.role}
         style=${styleMap({ width: `${String(column.width)}px` })}
       >
         <div
           class="content"
+          role="none"
           style=${styleMap({
             width: `${String(column.contentWidth)}px`,
             transform: `translateY(${String(-column.scroll)}px)`,
           })}
         >
-          ${column.items.map((item) => this.#renderItem(item))}
+          ${column.items.map((item, index) =>
+            this.#renderItem(item, index, column.items.length),
+          )}
         </div>
       </div>
     `;
   }
 
-  #renderItem(item: ItemView): TemplateResult {
+  #renderItem(item: ItemView, index: number, count: number): TemplateResult {
+    const { node } = item;
     return html`
       <div
         class="item"
         part="item"
-        data-kind=${item.node.kind}
+        id=${itemId(item.path)}
+        role="treeitem"
+        aria-level=${item.path.length}
+        aria-posinset=${index + 1}
+        aria-setsize=${count}
+        aria-expanded=${node.kind === 'group' ? String(item.expanded) : nothing}
+        aria-selected=${
+          node.kind === 'option' && item.state === 'selected' ? 'true' : nothing
+        }
+        aria-disabled=${isEnabled(node) ? nothing : 'true'}
+        data-kind=${node.kind}
         data-state=${item.state}
-        ?data-disabled=${item.node.disabled === true}
-        data-value=${item.node.kind === 'option' ? item.node.value : nothing}
+        ?data-disabled=${node.disabled === true}
+        data-value=${node.kind === 'option' ? node.value : nothing}
       >
-        <span class="label">${item.node.label}</span>
+        <span class="label">${node.label}</span>
       </div>
     `;
   }
 
+  protected override firstUpdated(): void {
+    const root = this.renderRoot as ShadowRoot;
+    root.adoptedStyleSheets = [...root.adoptedStyleSheets, this.#themeSheet];
+  }
+
   protected override updated(): void {
+    this.#updateTheme();
     this.#measure();
+  }
+
+  /** The `aria-label` of the element, otherwise the text of its `<label>` elements. */
+  #accessibleName(): string | undefined {
+    const label = this.getAttribute('aria-label');
+    if (label !== null) return label;
+    const texts = Array.from(this.#internals.labels, (element) =>
+      (element.textContent ?? '').replace(/\s+/g, ' ').trim(),
+    ).filter((text) => text !== '');
+    return texts.length > 0 ? texts.join(' ') : undefined;
+  }
+
+  /**
+   * Measures the colours that CSS alone cannot provide: the colour of the
+   * browser's focus ring, which becomes the default accent, and a text colour
+   * that contrasts with the background of the highlighted item.
+   */
+  #updateTheme(): void {
+    const ring = this._ringProbe;
+    const highlight = this._highlightProbe;
+    if (ring === null || highlight === null) return;
+
+    let accent = FALLBACK_ACCENT;
+    if (CSS.supports('outline-color', '-webkit-focus-ring-color')) {
+      // Chrome and Safari: the very colour of the ring around a focused input.
+      accent = getComputedStyle(ring).outlineColor;
+    } else if (CSS.supports('color', 'AccentColor')) {
+      // Firefox: the system accent colour, which its focus ring uses too.
+      accent = 'AccentColor';
+    }
+    this.#setThemeRules(`:host { --_liana-system-accent: ${accent}; }`);
+
+    const text = contrastingText(getComputedStyle(highlight).color);
+    this.#setThemeRules(
+      `:host { --_liana-system-accent: ${accent}; --_liana-on-highlight: ${text}; }`,
+    );
+  }
+
+  #setThemeRules(rules: string): void {
+    if (rules === this.#themeRules) return;
+    this.#themeRules = rules;
+    this.#themeSheet.replaceSync(rules);
   }
 
   #readTree(): void {
@@ -436,6 +625,72 @@ export class LianaSelect extends LitElement {
   #cancelGesture(): void {
     this.#pointerId = undefined;
     this.#controller.pointerCancel();
+  }
+
+  readonly #onKeyDown = (event: KeyboardEvent): void => {
+    if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+    // A key press makes the focus visible, even if a click brought it here.
+    this.#setFocusVisible(true);
+
+    const isCharacter = event.key.length === 1;
+    // A space while typing a search is part of the search, not a confirmation.
+    if (isCharacter && (event.key !== ' ' || this.#typed !== '')) {
+      this.#type(event.key);
+      event.preventDefault();
+      return;
+    }
+
+    const action = KEY_ACTIONS[event.key];
+    if (action === undefined) return;
+    this.#clearTyped();
+    const handled = this.#controller.keyboard(action);
+    // Keys that would otherwise scroll the page are always consumed. Escape is
+    // consumed only when it cancelled something, so that it can close a dialog.
+    if (handled || action !== 'cancel') event.preventDefault();
+  };
+
+  #type(character: string): void {
+    clearTimeout(this.#typedTimer);
+    this.#typed += character;
+    this.#controller.typeahead(this.#typed);
+    this.#typedTimer = setTimeout(() => {
+      this.#typed = '';
+    }, TYPEAHEAD_TIMEOUT);
+  }
+
+  #clearTyped(): void {
+    clearTimeout(this.#typedTimer);
+    this.#typed = '';
+  }
+
+  readonly #onFocus = (event: FocusEvent): void => {
+    // The ring is about to show: make sure it has the browser's current colour.
+    this.#updateTheme();
+    const target = event.currentTarget as HTMLElement;
+    // Show the cursor only when the focus came from the keyboard, not a click.
+    if (target.matches(':focus-visible')) {
+      this.#setFocusVisible(true);
+      this.#controller.keyboardFocus();
+    }
+  };
+
+  readonly #onBlur = (): void => {
+    // Switching to another window or tab blurs the element too, but the user has
+    // not left it: the navigation goes on when they come back.
+    if (!document.hasFocus()) return;
+    this.#setFocusVisible(false);
+    this.#clearTyped();
+    this.#controller.keyboardBlur();
+  };
+
+  /** Toggles the `focus-visible` custom state, which draws the focus ring. */
+  #setFocusVisible(visible: boolean): void {
+    try {
+      if (visible) this.#internals.states.add('focus-visible');
+      else this.#internals.states.delete('focus-visible');
+    } catch {
+      // Custom states are not supported: there is no ring, nothing else changes.
+    }
   }
 }
 

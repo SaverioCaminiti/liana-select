@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { LianaController, type ControllerOptions } from './controller';
+import {
+  LianaController,
+  type ControllerOptions,
+  type KeyboardAction,
+} from './controller';
 import type { ColumnMetrics } from './scroll';
 import { group, menu, option } from './test-fixtures';
 import type { TreeNode } from './tree';
@@ -394,28 +398,99 @@ describe('LianaController, shrinking layout', () => {
     expect(widths(h)).toEqual([0, 40, 40, 40, 200]);
   });
 
-  it('does not open the levels in a cascade when the layout moves under the pointer', () => {
+  /** Measures and redraws until the view stops changing. */
+  function settleAll(h: Harness): void {
+    for (let pass = 0; pass < 10; pass++) h.settle();
+  }
+
+  /** Index of the column that holds the highlighted item, or -1. */
+  function highlightedColumn(h: Harness): number {
+    return h.controller.view.columns.findIndex((column) =>
+      column.items.some((item) => item.state === 'highlighted'),
+    );
+  }
+
+  it('follows the pointer into the column that the layout moved under it', () => {
     const h = setup(chain(0), NARROW);
     h.down(100, 25);
-    // Entering the preview moves the columns: the pointer is now to the right of
-    // the column it has just entered, over the next preview.
+    // Entering the preview moves the columns to the left: the pointer, which has
+    // not moved, is now over the column after the one it entered. It belongs
+    // there, and chooses there.
     h.move(260, 25);
-    expect(h.path()).toEqual(['level0!', 'level1?', '-']);
-    h.move(270, 25);
-    h.move(390, 25);
-    expect(h.path()).toEqual(['level0!', 'level1?', '-']);
-    // It still chooses within that column by height.
-    h.move(390, 75);
-    expect(h.path()).toEqual(['level0!', 'leaf1?']);
+    expect(widths(h)).toEqual([40, 40, 200, 120]);
+    expect(h.path()).toEqual(['level0!', 'level1!', 'level2?', '-']);
   });
 
-  it('goes one level deeper after coming back inside the current column', () => {
+  it('keeps following when the column under the pointer is measured later', () => {
+    const h = setup(chain(0), NARROW);
+    h.down(100, 25);
+    // Without measurements of the new columns the pointer can only enter them.
+    h.controller.pointerMove(260, 25);
+    expect(h.path()).toEqual(['level0!', 'level1!', '-']);
+    // As soon as they are drawn and measured, it chooses in them.
+    h.settle();
+    expect(h.path()).toEqual(['level0!', 'level1!', 'level2?', '-']);
+  });
+
+  it('chooses by height in the column it lands on', () => {
     const h = setup(chain(0), NARROW);
     h.down(100, 25);
     h.move(260, 25);
-    h.move(150, 25);
-    h.move(300, 25);
-    expect(h.path()).toEqual(['level0!', 'level1!', 'level2?', '-']);
+    h.move(390, 75);
+    settleAll(h);
+    expect(h.path()).toEqual(['level0!', 'level1!', 'level2!', 'leaf3?']);
+  });
+
+  it('always highlights in the column under the pointer while sliding right', () => {
+    const h = setup(chain(0), NARROW);
+    h.down(10, 25);
+    for (let x = 10; x < 400; x += 6) {
+      h.move(x, 25);
+      settleAll(h);
+      const columns = h.controller.view.columns;
+      const index = highlightedColumn(h);
+      const box = columns[index];
+      expect(box, `nothing highlighted at x = ${String(x)}`).toBeDefined();
+      if (box === undefined) return;
+      const isLast = index === columns.length - 1 || columns[index + 1]?.width === 0;
+      const inside = x >= box.x - 8 && x < box.x + box.width + 8;
+      expect(
+        inside || isLast,
+        `x = ${String(x)} is not over column ${String(index)}`,
+      ).toBe(true);
+    }
+    // Sliding all the way right went all the way down, to the only leaf there.
+    expect(h.path().at(-1)).toBe('leaf5?');
+  });
+
+  it('reaches a city in one slide through continent, country and region', () => {
+    const geo = [
+      group('Europe', [
+        group('Italy', [
+          group('Lazio', [option('rome'), option('viterbo')]),
+          group('Tuscany', [option('florence'), option('siena')]),
+        ]),
+        group('France', [group('Provence', [option('marseille')])]),
+      ]),
+      group('Asia', [group('Japan', [group('Kansai', [option('kyoto')])])]),
+    ];
+    // As in the documentation: 352 wide, so four columns do not fit.
+    const h = setup(
+      geo,
+      { width: 352, height: 300 },
+      {
+        minContentWidth: 160,
+        collapsedMinWidth: 64,
+      },
+    );
+    h.down(40, 25);
+    for (let x = 40; x <= 340; x += 10) {
+      h.move(x, 25);
+      settleAll(h);
+    }
+    expect(h.path()).toEqual(['Europe!', 'Italy!', 'Lazio!', 'rome?']);
+    h.up();
+    expect(h.controller.value).toBe('rome');
   });
 
   it('goes back one column at a time while sliding left over shrunk columns', () => {
@@ -522,6 +597,188 @@ describe('LianaController, measurements that never repeat exactly', () => {
     h.down(100, 25);
     // The preview has just been measured for the first time: nothing to redraw.
     expect(measure(h, 300, 50)).toBe(false);
+  });
+});
+
+describe('LianaController, keyboard', () => {
+  function key(h: Harness, ...actions: KeyboardAction[]): boolean[] {
+    const results = actions.map((action) => h.controller.keyboard(action));
+    h.settle();
+    return results;
+  }
+
+  it('shows the cursor on focus, on the first item, without committing', () => {
+    const h = setup(menu, WIDE);
+    h.controller.keyboardFocus();
+    h.settle();
+    expect(h.path()).toEqual(['pizza?', '-']);
+    expect(h.controller.view.keyboard).toBe(true);
+    expect(h.controller.view.cursor).toEqual([0]);
+    expect(h.commits).toEqual([]);
+  });
+
+  it('goes down three levels and commits once, on confirm', () => {
+    const h = setup(menu, WIDE);
+    h.controller.keyboardFocus();
+    key(h, 'enter', 'next');
+    expect(h.path()).toEqual(['pizza!', 'special?', '-']);
+    key(h, 'enter', 'next');
+    expect(h.path()).toEqual(['pizza!', 'special!', 'seafood?']);
+    // Nothing is committed while navigating.
+    expect(h.controller.value).toBe('');
+    expect(h.commits).toEqual([]);
+
+    key(h, 'confirm');
+    expect(h.path()).toEqual(['pizza!', 'special!', 'seafood!']);
+    expect(h.controller.value).toBe('seafood');
+    expect(h.commits).toEqual(['seafood']);
+    expect(h.controller.view.keyboard).toBe(false);
+  });
+
+  it('places the cursor with the first arrow, then moves it', () => {
+    const h = setup(menu, WIDE);
+    key(h, 'next');
+    expect(h.path()).toEqual(['pizza?', '-']);
+    key(h, 'next');
+    expect(h.path()).toEqual(['drinks?', '-']);
+    key(h, 'last');
+    expect(h.path()).toEqual(['bread?']);
+  });
+
+  it('enters a group on confirm, like the right arrow', () => {
+    const h = setup(menu, WIDE);
+    key(h, 'next', 'confirm');
+    expect(h.path()).toEqual(['pizza!', 'margherita?']);
+    expect(h.commits).toEqual([]);
+  });
+
+  it('goes back with the cursor on the group it came from', () => {
+    const h = setup(menu, WIDE);
+    key(h, 'next', 'enter', 'back');
+    expect(h.path()).toEqual(['pizza?', '-']);
+  });
+
+  it('starts from the selected value', () => {
+    const h = setup(menu, WIDE);
+    h.controller.setValue('seafood');
+    h.settle();
+    h.controller.keyboardFocus();
+    h.settle();
+    expect(h.path()).toEqual(['pizza!', 'special!', 'seafood?']);
+    expect(h.controller.value).toBe('seafood');
+  });
+
+  it('restores the selection on cancel, and only consumes it when navigating', () => {
+    const h = setup(menu, WIDE);
+    h.controller.setValue('seafood');
+    h.settle();
+    expect(key(h, 'cancel')).toEqual([false]);
+
+    h.controller.keyboardFocus();
+    key(h, 'back', 'back', 'next');
+    expect(h.path()).toEqual(['drinks?', '-']);
+    expect(key(h, 'cancel')).toEqual([true]);
+    expect(h.path()).toEqual(['pizza!', 'special!', 'seafood!']);
+    expect(h.controller.value).toBe('seafood');
+    expect(h.commits).toEqual([]);
+  });
+
+  it('restores the selection when the focus leaves without confirming', () => {
+    const h = setup(menu, WIDE);
+    h.controller.keyboardFocus();
+    key(h, 'enter');
+    h.controller.keyboardBlur();
+    h.settle();
+    expect(h.path()).toEqual(['-']);
+    expect(h.commits).toEqual([]);
+  });
+
+  it('commits nothing when confirming the option already selected', () => {
+    const h = setup(menu, WIDE);
+    h.controller.setValue('bread');
+    h.settle();
+    h.controller.keyboardFocus();
+    key(h, 'confirm');
+    expect(h.controller.value).toBe('bread');
+    expect(h.commits).toEqual([]);
+    expect(h.path()).toEqual(['bread!']);
+  });
+
+  it('commits once when confirming an option in another group', () => {
+    const h = setup(menu, WIDE);
+    h.controller.setValue('bread');
+    h.settle();
+    h.controller.keyboardFocus();
+    key(h, 'first', 'next', 'enter', 'confirm');
+    expect(h.controller.value).toBe('water');
+    expect(h.commits).toEqual(['water']);
+  });
+
+  it('skips disabled items and empty groups', () => {
+    const h = setup(menu, WIDE);
+    h.controller.keyboardFocus();
+    key(h, 'next', 'next', 'next');
+    expect(h.path()).toEqual(['bread?']);
+    key(h, 'previous', 'enter', 'next');
+    expect(h.path()).toEqual(['drinks!', 'water?']);
+  });
+
+  it('jumps to an item by its label', () => {
+    const h = setup(menu, WIDE);
+    expect(h.controller.typeahead('b')).toBe(true);
+    h.settle();
+    expect(h.path()).toEqual(['bread?']);
+    h.controller.typeahead('d');
+    h.settle();
+    expect(h.path()).toEqual(['drinks?', '-']);
+  });
+
+  it('hands over to a gesture, from the committed state', () => {
+    const h = setup(menu, WIDE);
+    h.controller.setValue('bread');
+    h.settle();
+    h.controller.keyboardFocus();
+    key(h, 'first', 'enter');
+    h.down(100, 75);
+    expect(h.controller.view.keyboard).toBe(false);
+    expect(h.path()).toEqual(['drinks?', '-']);
+    h.up();
+    expect(h.commits).toEqual(['']);
+  });
+
+  it('ignores the keyboard during a gesture', () => {
+    const h = setup(menu, WIDE);
+    h.down(100, 25);
+    expect(key(h, 'next')).toEqual([false]);
+    expect(h.path()).toEqual(['pizza?', '-']);
+  });
+
+  it('describes the items for assistive technology', () => {
+    const h = setup(menu, WIDE);
+    h.controller.keyboardFocus();
+    key(h, 'enter');
+    const [first, second] = h.controller.view.columns;
+    expect(first?.items[0]).toMatchObject({
+      path: [0],
+      state: 'selected',
+      expanded: true,
+    });
+    expect(first?.items[1]).toMatchObject({ path: [1], expanded: false });
+    expect(second?.items[1]).toMatchObject({ path: [0, 1], expanded: false });
+    expect(h.controller.view.cursor).toEqual([0, 0]);
+  });
+
+  it('scrolls the column to keep the cursor visible', () => {
+    // Eight items of 50 in a column 200 tall: 200 of overflow.
+    const long = Array.from({ length: 8 }, (_, index) => option(`item${String(index)}`));
+    const h = setup(long, { width: 600, height: 200 });
+    h.controller.keyboardFocus();
+    key(h, 'last');
+    expect(h.controller.view.columns[0]?.scroll).toBe(200);
+    key(h, 'previous', 'previous', 'previous', 'previous');
+    expect(h.controller.view.columns[0]?.scroll).toBe(150);
+    key(h, 'first');
+    expect(h.controller.view.columns[0]?.scroll).toBe(0);
   });
 });
 
