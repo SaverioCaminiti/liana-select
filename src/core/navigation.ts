@@ -146,3 +146,102 @@ export function stateForValue(roots: readonly TreeNode[], value: string): NavSta
   const selected = findPathByValue(roots, value);
   return selected === undefined ? EMPTY_NAV_STATE : { selected, highlighted: null };
 }
+
+// Keyboard navigation.
+//
+// The keyboard moves a cursor, which is the highlighted item: it lives in the
+// column after the selected path, exactly like the item under the pointer.
+
+/** A move of the keyboard cursor within its column. */
+export type CursorMove = 'next' | 'previous' | 'first' | 'last';
+
+function enabledIndexes(items: readonly TreeNode[] | undefined): number[] {
+  const indexes: number[] = [];
+  for (const [index, node] of (items ?? []).entries()) {
+    if (isEnabled(node)) indexes.push(index);
+  }
+  return indexes;
+}
+
+/**
+ * Puts the keyboard cursor in the current column, if it is not there yet: on
+ * the selected option if the path ends on one, otherwise on the first enabled
+ * item of the column after the path. Nothing changes if there is no such item.
+ */
+export function placeCursor(roots: readonly TreeNode[], state: NavState): NavState {
+  if (state.highlighted !== null) return state;
+  if (getNodeAtPath(roots, state.selected)?.kind === 'option') {
+    return {
+      selected: state.selected.slice(0, -1),
+      highlighted: state.selected.at(-1) ?? null,
+    };
+  }
+  const first = enabledIndexes(getChildrenAt(roots, state.selected))[0];
+  return first === undefined ? state : { selected: state.selected, highlighted: first };
+}
+
+/** Moves the cursor to another enabled item of its column. It does not wrap around. */
+export function moveCursor(
+  roots: readonly TreeNode[],
+  state: NavState,
+  move: CursorMove,
+): NavState {
+  const enabled = enabledIndexes(getChildrenAt(roots, state.selected));
+  const current = state.highlighted;
+  let target: number | undefined;
+  if (move === 'first') target = enabled[0];
+  else if (move === 'last') target = enabled.at(-1);
+  else if (current === null) target = move === 'next' ? enabled[0] : enabled.at(-1);
+  else if (move === 'next') target = enabled.find((index) => index > current);
+  else target = enabled.filter((index) => index < current).at(-1);
+  return target === undefined ? state : { selected: state.selected, highlighted: target };
+}
+
+/**
+ * If the cursor is on an enabled group, selects it and moves the cursor to the
+ * first enabled item of its column. Otherwise nothing changes.
+ */
+export function enterGroup(roots: readonly TreeNode[], state: NavState): NavState {
+  if (state.highlighted === null) return state;
+  const selected = [...state.selected, state.highlighted];
+  const node = getNodeAtPath(roots, selected);
+  if (node?.kind !== 'group' || !isEnabled(node)) return state;
+  const first = enabledIndexes(node.children)[0];
+  return first === undefined ? state : { selected, highlighted: first };
+}
+
+/**
+ * Moves the cursor back to the previous column, on the group it came from,
+ * which is no longer selected. In the first column nothing changes.
+ */
+export function goBack(state: NavState): NavState {
+  const group = state.selected.at(-1);
+  if (group === undefined) return state;
+  return { selected: state.selected.slice(0, -1), highlighted: group };
+}
+
+/**
+ * Moves the cursor to the next enabled item of its column whose label starts
+ * with `text`, ignoring case, wrapping around. A single character searches
+ * after the cursor, so typing it again cycles through the items with that
+ * initial; longer text searches from the cursor, so it refines the match.
+ */
+export function findByPrefix(
+  roots: readonly TreeNode[],
+  state: NavState,
+  text: string,
+): NavState {
+  const items = getChildrenAt(roots, state.selected) ?? [];
+  if (items.length === 0 || text === '') return state;
+  const wanted = text.toLocaleLowerCase();
+  const start = (state.highlighted ?? -1) + (text.length === 1 ? 1 : 0);
+  for (let step = 0; step < items.length; step++) {
+    const index = (((start + step) % items.length) + items.length) % items.length;
+    const node = items[index];
+    if (node === undefined || !isEnabled(node)) continue;
+    if (node.label.toLocaleLowerCase().startsWith(wanted)) {
+      return { selected: state.selected, highlighted: index };
+    }
+  }
+  return state;
+}
