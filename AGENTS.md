@@ -90,7 +90,7 @@ Discuss these before building on them:
 
 ## Current status
 
-Version 1.0.0 is released: the interaction designed in
+Version 1.1.0 is released: the interaction designed in
 `docs/interaction-design.md` is implemented.
 
 - `src/core`: `tree.ts` (model), `navigation.ts` (selected path and highlight),

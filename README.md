@@ -12,7 +12,7 @@ with a single gesture.
 
 ## Status
 
-Version 1.0.0: the interaction works with mouse, touch and pen. Keyboard
+Version 1.1.0: the interaction works with mouse, touch and pen. Keyboard
 navigation and ARIA are still missing, and the package is not published to a
 registry yet. See [CHANGES.md](CHANGES.md) for the history.
 
