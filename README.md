@@ -62,7 +62,7 @@ dragging on it.
 | `--liana-item-min-height`            | `2.75rem`  | Minimum height of an item                  |
 | `--liana-item-max-height`            | `none`     | Maximum height of an item                  |
 | `--liana-column-min-width`           | `10rem`    | Minimum width of a column before shrinking |
-| `--liana-column-collapsed-min-width` | `2rem`     | Minimum width of a shrunk column           |
+| `--liana-column-collapsed-min-width` | `4rem`     | Minimum width of a shrunk column           |
 | `--liana-highlight-color`            | blue tint  | Background of the item under the pointer   |
 | `--liana-selected-color`             | green tint | Background of a selected item              |
 

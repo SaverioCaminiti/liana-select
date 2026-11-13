@@ -220,7 +220,7 @@ with fractional sizes green.
 - `--liana-item-min-height` (default `2.75rem`) and `--liana-item-max-height`
   (default `none`).
 - `--liana-column-min-width` (default `10rem`): the minimum content width.
-- `--liana-column-collapsed-min-width` (default `2rem`).
+- `--liana-column-collapsed-min-width` (default `4rem`).
 - `--liana-highlight-color` and `--liana-selected-color`.
 - `::part(column)` and `::part(item)`.
 

@@ -64,6 +64,8 @@ export class LianaSelect extends LitElement {
       -webkit-user-select: none;
       /* The gesture owns every touch: no native scrolling or zooming. */
       touch-action: none;
+      /* Thin lines between columns and between items. */
+      --_liana-divider: color-mix(in srgb, currentColor 15%, transparent);
     }
 
     :host(:disabled) {
@@ -91,7 +93,7 @@ export class LianaSelect extends LitElement {
       inset-block: 0;
       inset-inline-end: 0;
       width: 1px;
-      background: color-mix(in srgb, currentColor 15%, transparent);
+      background: var(--_liana-divider);
       pointer-events: none;
     }
 
@@ -115,16 +117,16 @@ export class LianaSelect extends LitElement {
       overflow: hidden;
     }
 
+    .item + .item {
+      border-top: 1px solid var(--_liana-divider);
+    }
+
     .item[data-state='highlighted'] {
       background: var(--liana-highlight-color, color-mix(in srgb, #2f9bff 35%, Field));
     }
 
     .item[data-state='selected'] {
       background: var(--liana-selected-color, color-mix(in srgb, #35b558 40%, Field));
-    }
-
-    .item[data-disabled] {
-      opacity: 0.4;
     }
 
     .label {
@@ -137,6 +139,12 @@ export class LianaSelect extends LitElement {
       content: '›';
       flex: none;
       opacity: 0.6;
+    }
+
+    /* Dim the text only, so the line above a disabled item stays like the others. */
+    .item[data-disabled] > .label,
+    .item[data-disabled]::after {
+      opacity: 0.4;
     }
 
     /* Invisible rulers that turn the width custom properties into pixels. */
@@ -152,7 +160,7 @@ export class LianaSelect extends LitElement {
     }
 
     .probe-collapsed {
-      width: var(--liana-column-collapsed-min-width, 2rem);
+      width: var(--liana-column-collapsed-min-width, 4rem);
     }
   `;
 

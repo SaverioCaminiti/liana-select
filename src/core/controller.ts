@@ -42,7 +42,7 @@ export interface ControllerOptions {
 
 export const DEFAULT_CONTROLLER_OPTIONS: ControllerOptions = {
   minContentWidth: 160,
-  collapsedMinWidth: 32,
+  collapsedMinWidth: 64,
   hysteresis: 8,
   backtrackTravel: 24,
 };
