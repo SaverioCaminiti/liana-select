@@ -450,6 +450,81 @@ describe('LianaController, shrinking layout', () => {
   });
 });
 
+describe('LianaController, measurements that never repeat exactly', () => {
+  // A browser reports positions with rounding noise that depends on the scroll
+  // offset. This stands in for it: any change of the offset, however small,
+  // changes the noise.
+  const NOISE = 0.00003;
+
+  function measure(h: Harness, height: number, itemHeight: number): boolean {
+    const metrics = new Map<string, ColumnMetrics>();
+    for (const column of h.controller.view.columns) {
+      const noise = NOISE * Math.sin(column.scroll * 12345.678 + 1);
+      metrics.set(column.key, {
+        height,
+        items: column.items.map((_, index) => ({
+          top: index * itemHeight + noise,
+          height: itemHeight - noise,
+        })),
+      });
+    }
+    const listener = vi.fn();
+    h.controller.onViewChange = listener;
+    h.controller.setMetrics(metrics);
+    return listener.mock.calls.length > 0;
+  }
+
+  /** Measures and redraws until nothing changes; returns the number of passes. */
+  function passesToSettle(h: Harness, height: number, itemHeight: number): number {
+    for (let pass = 1; pass <= 50; pass++) {
+      if (!measure(h, height, itemHeight)) return pass;
+    }
+    return Infinity;
+  }
+
+  const flat = Array.from({ length: 8 }, (_, index) => option(`item${String(index)}`));
+
+  it('does not scroll a column that overflows by a fraction of a pixel', () => {
+    // Eight items of 50.05 in a column of 400: 0.4 of phantom overflow.
+    const h = setup(flat, { width: 600, height: 400 });
+    passesToSettle(h, 400, 50.05);
+    h.controller.pointerDown(100, 10);
+    h.controller.pointerMove(100, 200);
+    h.controller.pointerMove(100, 390);
+    expect(h.controller.view.columns[0]?.scroll).toBe(0);
+    expect(passesToSettle(h, 400, 50.05)).toBeLessThanOrEqual(2);
+  });
+
+  it('settles while a really overflowing column is being scrolled', () => {
+    // Eight items of 80 in a column of 400: 240 of overflow.
+    const h = setup(flat, { width: 600, height: 400 });
+    passesToSettle(h, 400, 80);
+    h.controller.pointerDown(100, 100);
+    for (let y = 100; y <= 380; y += 7) {
+      h.controller.pointerMove(100, y);
+      expect(passesToSettle(h, 400, 80)).toBeLessThanOrEqual(2);
+    }
+    expect(h.controller.view.columns[0]?.scroll).toBe(240);
+  });
+
+  it('keeps scroll offsets on whole pixels', () => {
+    const h = setup(flat, { width: 600, height: 400 });
+    passesToSettle(h, 400, 80);
+    h.controller.pointerDown(100, 100);
+    h.controller.pointerMove(100, 233);
+    const scroll = h.controller.view.columns[0]?.scroll ?? NaN;
+    expect(scroll).toBeGreaterThan(0);
+    expect(Number.isInteger(scroll)).toBe(true);
+  });
+
+  it('asks for no draw when a new measurement changes nothing on screen', () => {
+    const h = setup(menu, WIDE);
+    h.down(100, 25);
+    // The preview has just been measured for the first time: nothing to redraw.
+    expect(measure(h, 300, 50)).toBe(false);
+  });
+});
+
 describe('LianaController, notifications', () => {
   it('notifies view changes, but not for measurements that did not change', () => {
     const h = setup(menu, WIDE);

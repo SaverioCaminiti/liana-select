@@ -12,6 +12,9 @@ import './liana-group';
 import './liana-option';
 import { readTree } from './read-tree';
 
+/** How many times the element may measure itself before the browser runs a task. */
+const MAX_MEASURE_PASSES = 10;
+
 /** Attributes of the child elements that change the tree. */
 const TREE_ATTRIBUTES = ['value', 'label', 'disabled', 'selected'];
 
@@ -168,6 +171,8 @@ export class LianaSelect extends LitElement {
   #defaultValue = '';
   /** Pointer that owns the gesture in progress. */
   #pointerId: number | undefined;
+  /** Measurements taken since the browser last ran a task. */
+  #measurePasses = 0;
 
   @query('.columns') private _columns!: HTMLElement | null;
   @query('.probe-min') private _minProbe!: HTMLElement | null;
@@ -338,7 +343,27 @@ export class LianaSelect extends LitElement {
     const columns = this._columns;
     if (columns === null || !this.isConnected) return;
 
-    this.#controller.setSize(columns.clientWidth, columns.clientHeight);
+    // Measuring can ask for a draw, which measures again. The core makes this
+    // settle in a pass or two; if it ever did not, the page would freeze, because
+    // Lit draws in microtasks and the browser would never get to run a task.
+    // So stop for this turn after a few passes, and let the browser breathe.
+    if (this.#measurePasses === 0) {
+      setTimeout(() => {
+        this.#measurePasses = 0;
+      });
+    }
+    this.#measurePasses += 1;
+    if (this.#measurePasses > MAX_MEASURE_PASSES) {
+      if (this.#measurePasses === MAX_MEASURE_PASSES + 1) {
+        console.warn('<liana-select>: measuring did not settle; please report this.');
+      }
+      return;
+    }
+
+    // Everything is read from bounding rectangles, which are fractional. Mixing
+    // them with clientHeight, which is rounded, would invent a tiny overflow.
+    const bounds = columns.getBoundingClientRect();
+    this.#controller.setSize(bounds.width, bounds.height);
     this.#controller.setOptions({
       minContentWidth: this._minProbe?.getBoundingClientRect().width ?? 0,
       collapsedMinWidth: this._collapsedProbe?.getBoundingClientRect().width ?? 0,
@@ -351,7 +376,7 @@ export class LianaSelect extends LitElement {
       if (content === null || key === undefined) continue;
       const contentTop = content.getBoundingClientRect().top;
       metrics.set(key, {
-        height: column.clientHeight,
+        height: bounds.height,
         items: Array.from(content.children, (item) => {
           const rect = item.getBoundingClientRect();
           return { top: rect.top - contentTop, height: rect.height };
@@ -405,6 +430,11 @@ export class LianaSelect extends LitElement {
     this.#controller.pointerCancel();
   }
 }
+
+// The element draws, measures what it drew, and may have to draw again: the
+// second draw can only be scheduled as a side effect of the first. This is the
+// case Lit's development warning tells to opt out for.
+LianaSelect.disableWarning?.('change-in-update');
 
 declare global {
   interface HTMLElementTagNameMap {

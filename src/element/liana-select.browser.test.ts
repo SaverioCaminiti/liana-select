@@ -206,6 +206,31 @@ describe('<liana-select> gesture', () => {
   });
 });
 
+describe('<liana-select> with fractional sizes', () => {
+  // Regression: a height that is not a whole number of pixels made the column
+  // look overflowing by a fraction of a pixel, and the measure / scroll / draw
+  // cycle never settled, freezing the page.
+  it.each([300.4, 420.4, 297.37, 243.9])(
+    'stays responsive at a height of %fpx',
+    async (height) => {
+      select.style.height = `${String(height)}px`;
+      await settled();
+
+      await drag([150, 5], [150, height - 5]);
+      await drag([150, height / 2], [750, height / 3]);
+      await tap(150, height * 0.4);
+      await tap(450, height * 0.6);
+
+      // Reaching this point at all means the page did not freeze.
+      const scrolled = Array.from(
+        select.shadowRoot?.querySelectorAll<HTMLElement>('.content') ?? [],
+        (content) => content.style.transform,
+      );
+      expect(scrolled.every((transform) => transform === 'translateY(0px)')).toBe(true);
+    },
+  );
+});
+
 describe('<liana-select> in a form', () => {
   it('submits its value under its name', async () => {
     expect(new FormData(form).get('dish')).toBe('');

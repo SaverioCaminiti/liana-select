@@ -204,6 +204,16 @@ In the equal parts layout the columns never move, and none of this applies.
   last option marked `selected` wins.
 - A form reset goes back to the option marked `selected`, or to no value.
 - No transitions or animations yet.
+- Scroll offsets are whole pixels, and a column that overflows by less than one
+  pixel does not scroll.
+
+**Measuring must settle.** The element draws, measures what it drew and gives
+the numbers to the core, which may ask for another draw. Browsers report
+fractional sizes with rounding noise that depends on the scroll offset, so this
+cycle only ends if the core ignores differences that small and asks for a draw
+only when what is drawn would change. Getting this wrong froze the whole page.
+Any change to measuring, scrolling or layout has to keep the regression tests
+with fractional sizes green.
 
 ## Styling
 

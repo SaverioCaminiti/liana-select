@@ -17,6 +17,7 @@ import {
   anchoredScroll,
   scrollRange,
   scrollToReveal,
+  snapScroll,
   type ColumnMetrics,
   type ScrollAnchor,
 } from './scroll';
@@ -90,12 +91,39 @@ export function columnKey(parentPath: NodePath): string {
   return `/${parentPath.join('/')}`;
 }
 
+/**
+ * Measurements closer than this many pixels are the same measurement. Browsers
+ * report positions with rounding noise that depends on the scroll offset, and
+ * reacting to that noise would never settle: every draw would change it again.
+ */
+const METRICS_TOLERANCE = 0.05;
+
+function close(a: number, b: number): boolean {
+  return Math.abs(a - b) <= METRICS_TOLERANCE;
+}
+
 function sameMetrics(a: ColumnMetrics | undefined, b: ColumnMetrics): boolean {
-  if (a?.height !== b.height || a.items.length !== b.items.length) return false;
+  if (a === undefined || !close(a.height, b.height)) return false;
+  if (a.items.length !== b.items.length) return false;
   return a.items.every((item, index) => {
     const other = b.items[index];
-    return item.top === other?.top && item.height === other.height;
+    return (
+      other !== undefined &&
+      close(item.top, other.top) &&
+      close(item.height, other.height)
+    );
   });
+}
+
+function sameScroll(
+  a: ReadonlyMap<string, number>,
+  b: ReadonlyMap<string, number>,
+): boolean {
+  if (a.size !== b.size) return false;
+  for (const [key, value] of a) {
+    if (b.get(key) !== value) return false;
+  }
+  return true;
 }
 
 /**
@@ -188,7 +216,11 @@ export class LianaController {
 
   /**
    * Sets the measured geometry of the columns currently drawn, by column key.
-   * To be called after every draw; it does nothing when the numbers are the same.
+   * To be called after every draw.
+   *
+   * Measuring follows drawing, and a new measurement can ask for a new draw:
+   * this must settle. So it asks for one only when what is drawn would change,
+   * and measurements that differ by rounding noise count as equal.
    */
   setMetrics(metrics: ReadonlyMap<string, ColumnMetrics>): void {
     let changed = false;
@@ -199,13 +231,20 @@ export class LianaController {
     }
     if (!changed) return;
 
+    const navBefore = this.#nav;
+    const scrollBefore = new Map(this.#scroll);
     if (this.#gesture !== undefined) {
       // The column under the pointer may have just been measured.
       this.#point(this.#gesture);
     } else {
       this.#settleScroll();
     }
-    this.#changed();
+
+    const sameNav =
+      this.#nav.highlighted === navBefore.highlighted &&
+      this.#nav.selected.length === navBefore.selected.length &&
+      this.#nav.selected.every((index, level) => index === navBefore.selected[level]);
+    if (!sameNav || !sameScroll(scrollBefore, this.#scroll)) this.#changed();
   }
 
   pointerDown(x: number, y: number): void {
@@ -393,7 +432,11 @@ export class LianaController {
 
     let index: number | null = null;
     if (metrics !== undefined && key === gesture.anchorKey) {
-      const scroll = anchoredScroll(gesture.y, scrollRange(metrics), gesture.anchor);
+      const range = scrollRange(metrics);
+      const scroll = snapScroll(
+        anchoredScroll(gesture.y, range, gesture.anchor),
+        range.max,
+      );
       this.#scroll.set(key, scroll);
       index = itemUnder(gesture.y + scroll, metrics.items);
     }
@@ -422,13 +465,13 @@ export class LianaController {
         allMeasured = false;
         continue;
       }
-      let scroll = Math.min(this.#scroll.get(key) ?? 0, scrollRange(metrics).max);
+      let scroll = this.#scroll.get(key) ?? 0;
       const selected =
         column.activeIndex === null ? undefined : metrics.items[column.activeIndex];
       if (this.#revealPending && selected !== undefined) {
         scroll = scrollToReveal(scroll, selected, metrics);
       }
-      this.#scroll.set(key, scroll);
+      this.#scroll.set(key, snapScroll(scroll, scrollRange(metrics).max));
     }
     if (allMeasured) this.#revealPending = false;
     this.#pruneScroll();

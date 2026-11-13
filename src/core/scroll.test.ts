@@ -4,6 +4,7 @@ import {
   contentHeight,
   scrollRange,
   scrollToReveal,
+  snapScroll,
   type ColumnMetrics,
 } from './scroll';
 
@@ -30,6 +31,12 @@ describe('scrollRange', () => {
 
   it('has no scroll when the content fits', () => {
     expect(scrollRange(column(200, [50, 50])).max).toBe(0);
+  });
+
+  it('ignores an overflow of a fraction of a pixel', () => {
+    // Fractional sizes: the items add up to 200.4 in a column measured as 200.
+    expect(scrollRange(column(200, [100.2, 100.2])).max).toBe(0);
+    expect(scrollRange(column(200, [100.5, 100.5])).max).toBe(1);
   });
 
   it('copes with an empty column', () => {
@@ -96,6 +103,16 @@ describe('anchoredScroll', () => {
     const tiny = scrollRange(column(30, [40, 40]));
     expect(tiny.bottom).toBeLessThan(tiny.top);
     expect(anchoredScroll(10, tiny, { y: 10, scroll: 20 })).toBe(20);
+  });
+});
+
+describe('snapScroll', () => {
+  it('rounds to whole pixels and stays within the range', () => {
+    expect(snapScroll(12.4, 100)).toBe(12);
+    expect(snapScroll(12.6, 100)).toBe(13);
+    expect(snapScroll(-3, 100)).toBe(0);
+    expect(snapScroll(99.8, 99.6)).toBe(99.6);
+    expect(snapScroll(5, 0)).toBe(0);
   });
 });
 

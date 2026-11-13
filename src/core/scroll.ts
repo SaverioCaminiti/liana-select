@@ -39,14 +39,29 @@ export function contentHeight(metrics: ColumnMetrics): number {
   return last === undefined ? 0 : last.top + last.height;
 }
 
+/**
+ * Overflow below this many pixels is not overflow: it is the rounding of
+ * fractional sizes, and scrolling by it would only blur the text.
+ */
+export const MIN_OVERFLOW = 1;
+
 export function scrollRange(metrics: ColumnMetrics): ScrollRange {
   const first = metrics.items[0];
   const last = metrics.items.at(-1);
+  const overflow = contentHeight(metrics) - metrics.height;
   return {
     top: first === undefined ? 0 : first.height / 2,
     bottom: metrics.height - (last === undefined ? 0 : last.height / 2),
-    max: Math.max(0, contentHeight(metrics) - metrics.height),
+    max: overflow < MIN_OVERFLOW ? 0 : overflow,
   };
+}
+
+/**
+ * Snaps a scroll offset to whole pixels within its range. Whole pixels keep the
+ * text sharp, and make the offset insensitive to noise in the measurements.
+ */
+export function snapScroll(scroll: number, max: number): number {
+  return clamp(Math.round(scroll), 0, Math.max(0, max));
 }
 
 function clamp(value: number, min: number, max: number): number {
