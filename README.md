@@ -12,9 +12,9 @@ with a single gesture.
 
 ## Status
 
-Version 1.1.0: the interaction works with mouse, touch and pen. Keyboard
-navigation and ARIA are still missing, and the package is not published to a
-registry yet. See [CHANGES.md](CHANGES.md) for the history.
+Version 1.1.0: the interaction works with mouse, touch and pen. The next release
+adds keyboard navigation and ARIA, already on `develop`. The package is not
+published to a registry yet. See [CHANGES.md](CHANGES.md) for the history.
 
 ## Usage
 
@@ -53,7 +53,9 @@ select.value = ''; // back to the first column
 
 To select, press on a group, slide right into its column, keep going, and release
 on an option: one gesture. One tap per level works too, and sliding back left
-changes an earlier choice.
+changes an earlier choice. With the keyboard, Tab into it, move with the arrow
+keys and confirm with Enter; Escape restores the previous choice. For assistive
+technology it is a tree: name it with `aria-label` or a `<label for>`.
 
 The element is a block, `20rem` tall by default: size it with CSS. It is meant to
 be large, and it takes over every touch on it, so the page cannot be scrolled by
@@ -61,14 +63,16 @@ dragging on it.
 
 ### Styling
 
-| Custom property                      | Default    | Purpose                                    |
-| ------------------------------------ | ---------- | ------------------------------------------ |
-| `--liana-item-min-height`            | `2.75rem`  | Minimum height of an item                  |
-| `--liana-item-max-height`            | `none`     | Maximum height of an item                  |
-| `--liana-column-min-width`           | `10rem`    | Minimum width of a column before shrinking |
-| `--liana-column-collapsed-min-width` | `4rem`     | Minimum width of a shrunk column           |
-| `--liana-highlight-color`            | blue tint  | Background of the item under the pointer   |
-| `--liana-selected-color`             | green tint | Background of a selected item              |
+| Custom property                      | Default      | Purpose                                                |
+| ------------------------------------ | ------------ | ------------------------------------------------------ |
+| `--liana-item-min-height`            | `2.75rem`    | Minimum height of an item                              |
+| `--liana-item-max-height`            | `none`       | Maximum height of an item                              |
+| `--liana-column-min-width`           | `10rem`      | Minimum width of a column before shrinking             |
+| `--liana-column-collapsed-min-width` | `4rem`       | Minimum width of a shrunk column                       |
+| `--liana-accent-color`               | focus ring   | Base of all the colours, and the focus ring            |
+| `--liana-selected-color`             | accent       | Background of a selected item                          |
+| `--liana-selected-text-color`        | contrast     | Text of a selected item                                |
+| `--liana-highlight-color`            | light accent | Background of the item under the pointer or the cursor |
 
 Columns and items are also exposed as `::part(column)` and `::part(item)`.
 

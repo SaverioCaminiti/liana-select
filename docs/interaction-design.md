@@ -43,10 +43,13 @@ and `<optgroup>` are not used, because nested `<optgroup>` is invalid HTML.
 - **Item**: an option (leaf) or a group (has children).
 - **Path**: the chain of items chosen so far, one per column, starting from the
   first column.
-- **Highlighted**: the item under the pointer during a gesture. Temporary, like a
-  mouse hover. Shown in light blue.
-- **Selected**: an item the user has chosen: they moved past it, or released on
-  it. Shown in green.
+- **Highlighted**: the item under the pointer during a gesture, or under the
+  keyboard cursor. Temporary, like a mouse hover. Shown in a light tint of the
+  accent colour.
+- **Selected**: an item the user has chosen: they moved past it, released on it,
+  or confirmed it with the keyboard. Shown in the accent colour.
+- **Accent colour**: by default the colour of the browser's own focus ring, so
+  that the component matches the other inputs of the page.
 - **Current column**: where the next choice happens. During a gesture it is the
   column under the pointer. At rest it is the column after the last selected
   group, or the column of the selected leaf.
@@ -164,7 +167,8 @@ There is never horizontal scrolling and never a horizontal scrollbar.
 - Left columns all shrink to the same width. If they do not fit even at the
   collapsed minimum width, the leftmost ones are hidden until the user goes back.
 - A flat tree (one level) uses a single full-width column.
-- Highlight and selection colours are themeable, light blue and green by default.
+- Highlight and selection colours are themeable, and derive from one accent
+  colour.
 
 ## Choices made while implementing: to review
 
@@ -218,13 +222,52 @@ only when what is drawn would change. Getting this wrong froze the whole page.
 Any change to measuring, scrolling or layout has to keep the regression tests
 with fractional sizes green.
 
+## Keyboard
+
+Agreed with the owner: the keys move a cursor, and nothing is committed until an
+option is confirmed, as the gesture commits only at release.
+
+- The component is one tab stop. Reaching it with the keyboard shows the
+  browser's focus ring around it and the cursor: on the selected option, or on
+  the first enabled item of the current column. Focus from a click shows
+  neither; the first key then places the cursor.
+- **↓ / ↑** move to the next or previous enabled item of the column, without
+  wrapping. **Home / End** go to the first or last. The column scrolls to keep
+  the cursor visible.
+- **→** on a group selects it and moves into its column, on the first enabled
+  item. **←** goes back to the previous column, on the group it came from.
+- **Enter / Space** on an option selects it and commits the value, dispatching
+  `input` and `change` if it changed. On a group they act as →.
+- **Escape**, or leaving the component with the focus, restores the selection
+  from before the keys. Switching to another window does not. Escape is left to
+  the page when there is nothing to cancel, so it can still close a dialog.
+- **Letters** search the column: the next item whose label starts with what was
+  typed in the last 500 ms. A space within those 500 ms is part of the search.
+- A gesture during keyboard navigation drops it and starts from the committed
+  state.
+
+## Assistive technology
+
+The component is a WAI-ARIA tree, in flat form: one `treeitem` per visible
+item, with `aria-level`, `aria-posinset`, `aria-setsize`, `aria-expanded` on
+groups, `aria-selected` on the selected option and `aria-disabled` where it
+applies. The tree points at the cursor, or at the selected option, with
+`aria-activedescendant`. Its name comes from `aria-label` on the element, or
+from the `<label>` elements associated with it. Items are in column order, not
+in tree order: level and position are announced, and the focus is managed by
+the component.
+
 ## Styling
 
 - `--liana-item-min-height` (default `2.75rem`) and `--liana-item-max-height`
   (default `none`).
 - `--liana-column-min-width` (default `10rem`): the minimum content width.
 - `--liana-column-collapsed-min-width` (default `4rem`).
-- `--liana-highlight-color` and `--liana-selected-color`.
+- `--liana-accent-color` (default: the colour of the browser's focus ring,
+  measured at runtime, otherwise `AccentColor`, otherwise a fixed blue).
+- `--liana-selected-color` (default: the accent), `--liana-selected-text-color`
+  (default: black or white, whichever contrasts more) and
+  `--liana-highlight-color` (default: a light tint of the accent).
 - `::part(column)` and `::part(item)`.
 
 ## Open questions
@@ -237,7 +280,8 @@ None at the moment.
   touching the component, which may fill the screen. Accepted for now. Evaluate
   alternatives later, for example two-finger scrolling or shift + drag, as
   embedded maps do.
-- Keyboard navigation and ARIA.
+- Try the component with real screen readers, such as VoiceOver and NVDA. So
+  far only the roles and states have been checked.
 - Try the gesture on real touch devices. So far it has been exercised with a
   mouse and with simulated pointer events only.
 - Right-to-left layouts.
