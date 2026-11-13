@@ -70,7 +70,7 @@ dragging on it.
 | `--liana-column-min-width`           | `10rem`      | Minimum width of a column before shrinking             |
 | `--liana-column-collapsed-min-width` | `4rem`       | Minimum width of a shrunk column                       |
 | `--liana-accent-color`               | focus ring   | Base of all the colours, and the focus ring            |
-| `--liana-highlight-color`            | accent       | Background of the item under the pointer or the cursor |
+| `--liana-highlight-color`            | half accent  | Background of the item under the pointer or the cursor |
 | `--liana-highlight-text-color`       | contrast     | Text of the item under the pointer or the cursor       |
 | `--liana-selected-color`             | light accent | Background of a selected item                          |
 

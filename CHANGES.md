@@ -21,8 +21,9 @@ follow [semantic versioning](https://semver.org/).
 ### Changed
 
 - Default colours: the item under the pointer or the cursor takes the colour of
-  the browser's focus ring, with black or white text for contrast, and selected
-  items a light tint of it. The green of selected items is gone.
+  the browser's focus ring mixed half and half with the background of the
+  field, with black or white text for contrast, and selected items a lighter
+  tint of it. The green of selected items is gone.
 - `value` read during a gesture now returns the committed value. Before, it could
   briefly read as empty while the pointer was on a group. Events and the form
   value were already updated only at release.

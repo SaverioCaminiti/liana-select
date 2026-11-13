@@ -73,7 +73,8 @@ function itemId(path: NodePath): string {
  * @cssprop --liana-accent-color - Base colour of the focus ring, the highlighted
  *   and the selected items. Defaults to the colour of the browser's focus ring.
  * @cssprop --liana-highlight-color - Background of the item under the pointer or
- *   the keyboard cursor. Defaults to the accent colour.
+ *   the keyboard cursor. Defaults to the accent colour mixed half and half with
+ *   the background of the field.
  * @cssprop --liana-highlight-text-color - Text of the item under the pointer or
  *   the keyboard cursor. Defaults to black or white, whichever contrasts more
  *   with its background.
@@ -115,7 +116,10 @@ export class LianaSelect extends LitElement {
       --_liana-divider: color-mix(in srgb, currentColor 15%, transparent);
       /* The system accent is measured at runtime: see #updateTheme. */
       --_liana-accent: var(--liana-accent-color, var(--_liana-system-accent, #0075ff));
-      --_liana-highlight: var(--liana-highlight-color, var(--_liana-accent));
+      --_liana-highlight: var(
+        --liana-highlight-color,
+        color-mix(in srgb, var(--_liana-accent) 50%, Field)
+      );
     }
 
     /* The same ring as the other inputs of the page, when reached with the keyboard. */

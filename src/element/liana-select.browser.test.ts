@@ -424,6 +424,17 @@ describe('<liana-select> colours', () => {
     return { background: style.backgroundColor, text: style.color };
   }
 
+  /** The colour a CSS colour value computes to, with the colour scheme of the select. */
+  function computed(value: string): string {
+    const probe = document.createElement('div');
+    probe.style.colorScheme = 'light dark';
+    probe.style.backgroundColor = value;
+    document.body.append(probe);
+    const colour = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return colour;
+  }
+
   /** Tabs into the select from the button before it: the cursor is on Pizza. */
   async function tabIn(): Promise<void> {
     document.querySelector<HTMLElement>('#before')?.focus();
@@ -431,7 +442,7 @@ describe('<liana-select> colours', () => {
     await settled();
   }
 
-  it('highlights with the colour of the browser focus ring', async () => {
+  it('highlights with the colour of the browser focus ring, lightened', async () => {
     // The ring of a button reached with the keyboard.
     document.querySelector<HTMLElement>('#before')?.focus();
     await userEvent.tab();
@@ -444,7 +455,11 @@ describe('<liana-select> colours', () => {
     await userEvent.tab();
     await settled();
     expect(path()).toEqual(['Pizza?', '-']);
-    expect(colours('Pizza').background).toBe(ring);
+    // Half the ring colour, half the background of the field.
+    expect(colours('Pizza').background).toBe(
+      computed(`color-mix(in srgb, ${ring} 50%, Field)`),
+    );
+    // The focus ring itself is the browser's colour, unmixed.
     expect(getComputedStyle(select).outlineColor).toBe(ring);
   });
 
@@ -459,15 +474,23 @@ describe('<liana-select> colours', () => {
     expect(text).toBe(getComputedStyle(select).color);
   });
 
+  it('derives the highlight from the accent colour', async () => {
+    select.style.setProperty('--liana-accent-color', 'rgb(0, 0, 200)');
+    await tabIn();
+    expect(colours('Pizza').background).toBe(
+      computed('color-mix(in srgb, rgb(0, 0, 200) 50%, Field)'),
+    );
+  });
+
   it('picks a readable text colour for the highlighted item', async () => {
-    select.style.setProperty('--liana-accent-color', 'rgb(20, 20, 120)');
+    select.style.setProperty('--liana-highlight-color', 'rgb(20, 20, 120)');
     await tabIn();
     expect(colours('Pizza')).toEqual({
       background: 'rgb(20, 20, 120)',
       text: 'rgb(255, 255, 255)',
     });
 
-    select.style.setProperty('--liana-accent-color', 'rgb(250, 230, 120)');
+    select.style.setProperty('--liana-highlight-color', 'rgb(250, 230, 120)');
     select.blur();
     await tabIn();
     expect(colours('Pizza')).toEqual({
