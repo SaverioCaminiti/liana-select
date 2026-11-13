@@ -1,22 +1,55 @@
 /**
- * Internal tree model used by the core.
+ * Tree model used by the core.
  *
- * This is NOT the public input format of <liana-select>, which is still to be
- * designed. It is the minimal shape the navigation logic needs, and the public
- * format will be converted into it.
+ * The element builds it from the `<liana-group>` / `<liana-option>` markup; the
+ * core never looks at the DOM.
  */
-export interface TreeNode {
-  readonly id: string;
+
+/** A leaf: choosing it sets the value of the component. */
+export interface OptionNode {
+  readonly kind: 'option';
+  readonly value: string;
   readonly label: string;
-  readonly children?: readonly TreeNode[];
+  readonly disabled?: boolean;
 }
+
+/** A category: choosing it opens the column with its children. */
+export interface GroupNode {
+  readonly kind: 'group';
+  readonly label: string;
+  readonly disabled?: boolean;
+  readonly children: readonly TreeNode[];
+}
+
+export type TreeNode = OptionNode | GroupNode;
 
 /** Position of a node in the tree, as the index of the child taken at each level. */
 export type NodePath = readonly number[];
 
-/** A leaf is a node that can be selected: it has no children. */
-export function isLeaf(node: TreeNode): boolean {
-  return node.children === undefined || node.children.length === 0;
+/**
+ * Whether the node can be highlighted and selected. A group without children
+ * leads nowhere, so it counts as disabled.
+ */
+export function isEnabled(node: TreeNode): boolean {
+  if (node.disabled === true) return false;
+  return node.kind === 'option' || node.children.length > 0;
+}
+
+/**
+ * Returns the children of the node at `parentPath`, the roots for the empty
+ * path, or `undefined` if the path does not lead to a group.
+ */
+export function getChildrenAt(
+  roots: readonly TreeNode[],
+  parentPath: NodePath,
+): readonly TreeNode[] | undefined {
+  let level: readonly TreeNode[] = roots;
+  for (const index of parentPath) {
+    const node = level[index];
+    if (node?.kind !== 'group') return undefined;
+    level = node.children;
+  }
+  return level;
 }
 
 /** Returns the node at `path`, or `undefined` if the path does not exist. */
@@ -24,27 +57,33 @@ export function getNodeAtPath(
   roots: readonly TreeNode[],
   path: NodePath,
 ): TreeNode | undefined {
-  let level: readonly TreeNode[] | undefined = roots;
-  let node: TreeNode | undefined;
-  for (const index of path) {
-    node = level?.[index];
-    if (node === undefined) return undefined;
-    level = node.children;
-  }
-  return node;
+  const index = path.at(-1);
+  if (index === undefined) return undefined;
+  return getChildrenAt(roots, path.slice(0, -1))?.[index];
 }
 
-/** Returns the path of the first node with the given id (depth-first), or `undefined`. */
-export function findPathById(
+/** Returns the path of the first option with the given value (depth-first). */
+export function findPathByValue(
   roots: readonly TreeNode[],
-  id: string,
+  value: string,
 ): NodePath | undefined {
   for (const [index, node] of roots.entries()) {
-    if (node.id === id) return [index];
-    if (node.children !== undefined) {
-      const childPath = findPathById(node.children, id);
+    if (node.kind === 'option') {
+      if (node.value === value) return [index];
+    } else {
+      const childPath = findPathByValue(node.children, value);
       if (childPath !== undefined) return [index, ...childPath];
     }
   }
   return undefined;
+}
+
+/** Number of levels of the deepest branch: 0 for an empty tree, 1 for a flat list. */
+export function treeDepth(roots: readonly TreeNode[]): number {
+  let depth = 0;
+  for (const node of roots) {
+    const below = node.kind === 'group' ? treeDepth(node.children) : 0;
+    depth = Math.max(depth, 1 + below);
+  }
+  return depth;
 }

@@ -4,17 +4,75 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>liana-select demo</title>
-    <style>
-      body {
-        font-family: system-ui, sans-serif;
-        margin: 2rem;
-      }
-    </style>
+    <link rel="stylesheet" href="./demo.css" />
     <script type="module" src="./main.ts"></script>
   </head>
   <body>
-    <h1>liana-select</h1>
-    <p>Swing through a tree of options and select one in a single, swift gesture.</p>
-    <liana-select></liana-select>
+    <header>
+      <h1>liana-select</h1>
+      <p>Swing through a tree of options and select one in a single, swift gesture.</p>
+      <p class="hint">
+        Press on a category, slide right into its column, keep going, and release on a
+        dish. Or tap one level at a time. Slide back left to change an earlier choice.
+      </p>
+    </header>
+
+    <main>
+      <section>
+        <h2>Order form</h2>
+        <p>
+          A restaurant menu, three levels deep, in a form. On a wide screen the columns
+          share the width in equal parts and never shrink.
+        </p>
+        <form id="order">
+          <liana-select id="menu" name="dish" data-menu></liana-select>
+          <div class="row">
+            <button type="submit">Add to cart</button>
+            <button type="reset">Reset</button>
+            <output id="menu-value"></output>
+          </div>
+        </form>
+        <ul id="cart" class="log" aria-label="Cart"></ul>
+      </section>
+
+      <section>
+        <h2>Preselected value</h2>
+        <p>
+          The markup marks <em>Nigiri salmon</em> as <code>selected</code>, so its whole
+          path is open.
+        </p>
+        <liana-select
+          id="preselected"
+          data-menu
+          data-selected="nigiri-salmon"
+        ></liana-select>
+        <output id="preselected-value"></output>
+      </section>
+
+      <section>
+        <h2>Narrow: shrinking columns</h2>
+        <p>
+          Not enough width for one equal part per level: the columns on the left shrink to
+          make room, and their text is clipped rather than re-wrapped.
+        </p>
+        <liana-select id="narrow" class="narrow" data-menu></liana-select>
+        <output id="narrow-value"></output>
+      </section>
+
+      <section>
+        <h2>Long column: vertical scrolling</h2>
+        <p>
+          Forty wines in a short box, with no scrollbar: the column scrolls with the
+          height of the pointer.
+        </p>
+        <liana-select id="long" class="short" data-wines></liana-select>
+        <output id="long-value"></output>
+      </section>
+
+      <section>
+        <h2>Events</h2>
+        <ul id="events" class="log" aria-label="Events"></ul>
+      </section>
+    </main>
   </body>
 </html>
