@@ -16,3 +16,15 @@ export {
   valueOf,
   visibleColumns,
 } from './navigation';
+export type { ColumnBox, LayoutInput } from './layout';
+export { layoutColumns, PREVIEW_RESERVE } from './layout';
+export type { ColumnMetrics, ItemBox, ScrollAnchor, ScrollRange } from './scroll';
+export { anchoredScroll, contentHeight, scrollRange, scrollToReveal } from './scroll';
+export { columnUnder, isInside, itemUnder } from './hit-test';
+export type {
+  ColumnView,
+  ControllerOptions,
+  ControllerView,
+  ItemView,
+} from './controller';
+export { columnKey, DEFAULT_CONTROLLER_OPTIONS, LianaController } from './controller';
