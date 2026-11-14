@@ -3,7 +3,7 @@
 What changed in each release of `liana-select`, newest first. Version numbers
 follow [semantic versioning](https://semver.org/).
 
-## Unreleased
+## 1.3.1 - 2026-11-14
 
 ### Changed
 
@@ -13,9 +13,9 @@ follow [semantic versioning](https://semver.org/).
   Italian cuisine first, then pizza, Chinese, Japanese, drinks, and sides, with
   4 to 6 groups each, 15 to 18 dishes per group, all in English and each with an
   emoji.
-
 - The release guide, `docs/releasing.md`, describes every field of the npm
   trusted publisher and its 2-day expiry, so releases can publish themselves.
+  This is the first version published by the release workflow.
 
 ## 1.3.0 - 2026-11-13
 
