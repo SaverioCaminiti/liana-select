@@ -16,6 +16,7 @@ import {
   type TrailMode,
 } from '../core/index';
 import { contrastingText } from './contrast';
+import { drawTrail } from './draw-trail';
 import './liana-group';
 import './liana-option';
 import { readTree } from './read-tree';
@@ -289,6 +290,8 @@ export class LianaSelect extends LitElement {
   #defaultValue = '';
   /** Pointer that owns the gesture in progress. */
   #pointerId: number | undefined;
+  /** Whether the focus being given now comes from a press, not from the keyboard. */
+  #focusFromPointer = false;
   /** Measurements taken since the browser last ran a task. */
   #measurePasses = 0;
   /** Letters typed for the search by label, and the timer that clears them. */
@@ -652,6 +655,15 @@ export class LianaSelect extends LitElement {
     if (this.matches(':disabled')) return;
 
     this.#pointerId = event.pointerId;
+    // A press that starts here is a gesture, never the start of a text selection
+    // in the page, even when the drag goes on outside. Preventing the default
+    // also prevents the focus, so give it back by hand: without the ring, as
+    // for any click.
+    event.preventDefault();
+    this.#focusFromPointer = true;
+    (event.currentTarget as HTMLElement).focus({ preventScroll: true });
+    this.#focusFromPointer = false;
+    document.addEventListener('selectstart', this.#preventSelection, true);
     // Keep receiving the events when the pointer leaves the component.
     try {
       (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
@@ -685,9 +697,20 @@ export class LianaSelect extends LitElement {
     if (this.#trailDrawing) this.#addTrailPoints(event);
     // The trail stops growing, and fades out on its own.
     this.#trailDrawing = false;
-    this.#pointerId = undefined;
+    this.#endPointer();
     this.#controller.pointerUp();
   };
+
+  /** Blocks any text selection that tries to start while a gesture is going on. */
+  readonly #preventSelection = (event: Event): void => {
+    event.preventDefault();
+  };
+
+  /** The gesture's pointer is gone: stop guarding against text selection. */
+  #endPointer(): void {
+    this.#pointerId = undefined;
+    document.removeEventListener('selectstart', this.#preventSelection, true);
+  }
 
   /**
    * Adds the positions of a pointer event to the trail. Browsers merge fast
@@ -733,18 +756,7 @@ export class LianaSelect extends LitElement {
     context.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
 
     const segments = this.#trail.segments(now);
-    context.lineCap = 'round';
-    context.strokeStyle = this.#trailColor;
-    for (const segment of segments) {
-      // Like a comet: thinner and more transparent towards the tail.
-      context.globalAlpha = segment.life;
-      context.lineWidth = this.#trailWidth * (0.25 + 0.75 * segment.life);
-      context.beginPath();
-      context.moveTo(segment.x1, segment.y1);
-      context.lineTo(segment.x2, segment.y2);
-      context.stroke();
-    }
-    context.globalAlpha = 1;
+    drawTrail(context, segments, this.#trailColor, this.#trailWidth);
 
     if (this.#trailDrawing || segments.length > 0) {
       this.#trailFrame = requestAnimationFrame(this.#drawTrail);
@@ -766,7 +778,7 @@ export class LianaSelect extends LitElement {
   };
 
   #cancelGesture(): void {
-    this.#pointerId = undefined;
+    this.#endPointer();
     this.#trailDrawing = false;
     this.#controller.pointerCancel();
   }
@@ -812,7 +824,7 @@ export class LianaSelect extends LitElement {
     this.#updateTheme();
     const target = event.currentTarget as HTMLElement;
     // Show the cursor only when the focus came from the keyboard, not a click.
-    if (target.matches(':focus-visible')) {
+    if (!this.#focusFromPointer && target.matches(':focus-visible')) {
       this.#setFocusVisible(true);
       this.#controller.keyboardFocus();
     }

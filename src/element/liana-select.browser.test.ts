@@ -39,6 +39,7 @@ const MARKUP = `
     </liana-select>
     <button type="button" id="after">After</button>
   </form>
+  <p id="text">Some text of the page, which a drag outside the select must not select.</p>
 `;
 
 let form: HTMLFormElement;
@@ -518,6 +519,40 @@ describe('<liana-select> colours', () => {
       background: 'rgb(250, 230, 120)',
       text: 'rgb(0, 0, 0)',
     });
+  });
+});
+
+describe('<liana-select> and the text of the page', () => {
+  function paragraph(): HTMLElement {
+    const element = document.querySelector<HTMLElement>('#text');
+    if (element === null) throw new Error('No paragraph');
+    return element;
+  }
+
+  it('lets the text of the page be selected by a drag that starts on it', async () => {
+    await userEvent.dragAndDrop(paragraph(), paragraph(), {
+      sourcePosition: { x: 2, y: 5 },
+      targetPosition: { x: 200, y: 5 },
+    });
+    expect(getSelection()?.toString()).not.toBe('');
+    getSelection()?.removeAllRanges();
+  });
+
+  it('does not select the text of the page when a drag leaves the select', async () => {
+    getSelection()?.removeAllRanges();
+    await userEvent.dragAndDrop(select, paragraph(), {
+      sourcePosition: { x: 150, y: 50 },
+      targetPosition: { x: 200, y: 5 },
+      steps: 10,
+    });
+    await settled();
+    expect(getSelection()?.toString()).toBe('');
+  });
+
+  it('still takes the focus on a click, without showing the focus ring', async () => {
+    await tap(150, 250);
+    expect(document.activeElement).toBe(select);
+    expect(select.matches(':state(focus-visible)')).toBe(false);
   });
 });
 

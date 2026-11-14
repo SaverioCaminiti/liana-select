@@ -207,6 +207,8 @@ In the equal parts layout the columns never move, and none of this applies.
   left columns.
 - A press to the right of the last column counts as a press inside it, as for a
   move (step 6 of the gesture).
+- A press on the component never starts a text selection in the page, even when
+  the drag goes on outside it.
 - A value set from a script before its option exists is remembered, and applied
   when the option appears.
 - The `value` of a `<liana-option>` defaults to its label, as for `<option>`. The
@@ -276,6 +278,8 @@ nothing about what is selected.
   `touch`.
 - It is never drawn when the user asks for reduced motion.
 - A new press starts a new trail, not joined to the previous one.
+- Where two pieces of the trail meet, only the newer one is painted, so the
+  semi-transparent tail shows no darker dots at the joints.
 
 ## Styling
 
