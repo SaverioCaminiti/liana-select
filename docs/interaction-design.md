@@ -125,6 +125,20 @@ and last item, and `max` the maximum scroll offset:
   under the pointer. From there the offset is interpolated linearly, from
   `(top, 0)` to `(ya, sa)` above the anchor and from `(ya, sa)` to `(bottom, max)`
   below it.
+- Agreed with the owner: once the pointer, **moving**, reaches `top` or
+  `bottom`, the anchor is dropped and the column follows the plain mapping from
+  `(top, 0)` to `(bottom, max)` until the pointer leaves it. There the anchored
+  offset is already 0 or `max`, as with the plain mapping, so the switch causes
+  no jump. From then on the same height always shows the same item, at the same
+  speed in both directions. A press, or an entry into the column, beyond an
+  extreme does not count: only a move further towards it does.
+
+Known limit: the first move from the anchor towards an extreme can be fast. For
+example, with 40 items, the column scrolled to the bottom and a press near the
+top, the 33 items above are compressed into the few pixels between the pointer
+and the top. It happens at most once per column and gesture. A possible
+improvement, not built: cap the speed of the anchored mapping, and let the column
+scroll on its own over time while the pointer stays at an extreme.
 
 Known limit, accepted: the more a column overflows, the less pointer travel each
 item gets. Authors are expected to structure their trees so that columns do not

@@ -363,6 +363,77 @@ describe('LianaController, vertical scroll', () => {
   });
 });
 
+describe('LianaController, vertical scroll after reaching an extreme', () => {
+  // Forty items of 50 in a column 500 tall: ten visible, 1500 of overflow.
+  // The plain mapping goes from (25, 0) to (475, 1500).
+  const forty = Array.from({ length: 40 }, (_, index) => option(`item${String(index)}`));
+  const TALL = { width: 600, height: 500 };
+
+  function scroll(h: Harness): number {
+    return h.controller.view.columns[0]?.scroll ?? -1;
+  }
+
+  function plain(y: number): number {
+    return Math.round((1500 * (Math.min(Math.max(y, 25), 475) - 25)) / 450);
+  }
+
+  /** Scrolls the column to the bottom with a first gesture, and releases. */
+  function scrolledToBottom(): Harness {
+    const h = setup(forty, TALL);
+    h.down(100, 250);
+    h.move(100, 475);
+    h.up();
+    expect(scroll(h)).toBe(1500);
+    return h;
+  }
+
+  it('does not jump when pressing on a column scrolled to the bottom', () => {
+    const h = scrolledToBottom();
+    h.down(100, 125);
+    expect(scroll(h)).toBe(1500);
+    // Content position 1625: item 32 is under the pointer, as before the press.
+    expect(h.path()).toEqual(['item32?']);
+  });
+
+  it('follows the plain mapping once the pointer has reached the first item', () => {
+    const h = scrolledToBottom();
+    h.down(100, 125);
+    h.move(100, 26);
+    expect(scroll(h)).toBe(15);
+    h.move(100, 25);
+    expect(scroll(h)).toBe(0);
+
+    // From here the same height always gives the same offset, in both directions.
+    for (const y of [250, 400, 100, 250, 475, 25, 250]) {
+      h.move(100, y);
+      expect(scroll(h)).toBe(plain(y));
+    }
+  });
+
+  it('follows the plain mapping once the pointer has reached the last item', () => {
+    const h = setup(forty, TALL);
+    h.down(100, 400);
+    h.move(100, 475);
+    expect(scroll(h)).toBe(1500);
+    for (const y of [250, 100, 25, 250]) {
+      h.move(100, y);
+      expect(scroll(h)).toBe(plain(y));
+    }
+  });
+
+  it('keeps the anchor when pressing beyond an extreme and moving back', () => {
+    const h = scrolledToBottom();
+    // Pressed in the top half of the first visible item.
+    h.down(100, 10);
+    expect(scroll(h)).toBe(1500);
+    // Moving back towards the middle is not reaching the extreme.
+    h.move(100, 20);
+    expect(scroll(h)).toBe(1500);
+    h.move(100, 250);
+    expect(scroll(h)).toBeGreaterThan(plain(250));
+  });
+});
+
 describe('LianaController, shrinking layout', () => {
   // A chain six levels deep: every level has one group and one option.
   function chain(level: number): TreeNode[] {

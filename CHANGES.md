@@ -14,6 +14,13 @@ follow [semantic versioning](https://semver.org/).
   `--liana-trail-width` and `--liana-trail-duration` change its look.
 - An example of the trail on the documentation site.
 
+### Changed
+
+- Vertical scrolling: once the pointer, moving, reaches the first or the last
+  item of an overflowing column, the column follows the plain mapping from top to
+  bottom. The way back is as smooth in both directions, and the same height
+  always shows the same item.
+
 ### Fixed
 
 - A drag that started on the select and left it could select the text of the
