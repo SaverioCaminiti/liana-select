@@ -39,6 +39,7 @@ const MARKUP = `
     </liana-select>
     <button type="button" id="after">After</button>
   </form>
+  <p id="text">Some text of the page, which a drag outside the select must not select.</p>
 `;
 
 let form: HTMLFormElement;
@@ -518,6 +519,164 @@ describe('<liana-select> colours', () => {
       background: 'rgb(250, 230, 120)',
       text: 'rgb(0, 0, 0)',
     });
+  });
+});
+
+describe('<liana-select> and the text of the page', () => {
+  function paragraph(): HTMLElement {
+    const element = document.querySelector<HTMLElement>('#text');
+    if (element === null) throw new Error('No paragraph');
+    return element;
+  }
+
+  it('lets the text of the page be selected by a drag that starts on it', async () => {
+    await userEvent.dragAndDrop(paragraph(), paragraph(), {
+      sourcePosition: { x: 2, y: 5 },
+      targetPosition: { x: 200, y: 5 },
+    });
+    expect(getSelection()?.toString()).not.toBe('');
+    getSelection()?.removeAllRanges();
+  });
+
+  it('does not select the text of the page when a drag leaves the select', async () => {
+    getSelection()?.removeAllRanges();
+    await userEvent.dragAndDrop(select, paragraph(), {
+      sourcePosition: { x: 150, y: 50 },
+      targetPosition: { x: 200, y: 5 },
+      steps: 10,
+    });
+    await settled();
+    expect(getSelection()?.toString()).toBe('');
+  });
+
+  it('still takes the focus on a click, without showing the focus ring', async () => {
+    await tap(150, 250);
+    expect(document.activeElement).toBe(select);
+    expect(select.matches(':state(focus-visible)')).toBe(false);
+  });
+});
+
+describe('<liana-select> trail', () => {
+  function canvas(): HTMLCanvasElement {
+    const element = select.shadowRoot?.querySelector('canvas');
+    if (element == null) throw new Error('No trail canvas');
+    return element;
+  }
+
+  /** How many pixels of the trail canvas are painted, and the colour of the most opaque. */
+  function painted(): { count: number; colour: [number, number, number] | null } {
+    const element = canvas();
+    const context = element.getContext('2d');
+    if (context === null || element.width === 0) return { count: 0, colour: null };
+    const { data } = context.getImageData(0, 0, element.width, element.height);
+    let count = 0;
+    let colour: [number, number, number] | null = null;
+    let opaque = 0;
+    for (let index = 3; index < data.length; index += 4) {
+      const alpha = data[index] ?? 0;
+      if (alpha === 0) continue;
+      count += 1;
+      if (alpha > opaque) {
+        opaque = alpha;
+        colour = [data[index - 3] ?? 0, data[index - 2] ?? 0, data[index - 1] ?? 0];
+      }
+    }
+    return { count, colour };
+  }
+
+  /** Slides a pointer of the given type across the first column, leaving it pressed. */
+  async function slide(pointerType: 'touch' | 'mouse' | 'pen'): Promise<void> {
+    const tree = select.shadowRoot?.querySelector<HTMLElement>('[role="tree"]');
+    if (tree == null) throw new Error('No tree');
+    const fire = (type: string, x: number, y: number): void => {
+      const rect = tree.getBoundingClientRect();
+      tree.dispatchEvent(
+        new PointerEvent(type, {
+          pointerId: 21,
+          pointerType,
+          isPrimary: true,
+          button: 0,
+          bubbles: true,
+          composed: true,
+          clientX: rect.left + x,
+          clientY: rect.top + y,
+        }),
+      );
+    };
+    fire('pointerdown', 40, 30);
+    for (let y = 30; y <= 270; y += 20) {
+      fire('pointermove', 40 + y / 4, y);
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    }
+  }
+
+  async function frames(count: number): Promise<void> {
+    for (let frame = 0; frame < count; frame++) {
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    }
+  }
+
+  it('lies over the columns without taking the pointer', () => {
+    const element = canvas();
+    expect(element.getAttribute('aria-hidden')).toBe('true');
+    expect(getComputedStyle(element).pointerEvents).toBe('none');
+    const rect = element.getBoundingClientRect();
+    const hit = select.shadowRoot?.elementFromPoint(rect.left + 40, rect.top + 30);
+    expect(hit?.closest('.item')).not.toBeNull();
+  });
+
+  it('follows a finger, then fades out', async () => {
+    await slide('touch');
+    await frames(2);
+    expect(painted().count).toBeGreaterThan(100);
+
+    select.style.setProperty('--liana-trail-duration', '100ms');
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    await frames(3);
+    expect(painted().count).toBe(0);
+  });
+
+  it('follows a pen too, but not the mouse by default', async () => {
+    await slide('pen');
+    await frames(2);
+    expect(painted().count).toBeGreaterThan(100);
+
+    select.remove();
+    document.body.innerHTML = MARKUP;
+    select = find('liana-select');
+    await settled();
+    await slide('mouse');
+    await frames(2);
+    expect(painted().count).toBe(0);
+  });
+
+  it('follows the mouse with trail="always", and nothing with trail="none"', async () => {
+    select.trail = 'always';
+    expect(select.getAttribute('trail')).toBe('always');
+    await slide('mouse');
+    await frames(2);
+    expect(painted().count).toBeGreaterThan(100);
+
+    select.remove();
+    document.body.innerHTML = MARKUP;
+    select = find('liana-select');
+    select.setAttribute('trail', 'none');
+    await settled();
+    await slide('touch');
+    await frames(2);
+    expect(painted().count).toBe(0);
+  });
+
+  it('takes its colour from --liana-trail-color', async () => {
+    select.style.setProperty('--liana-trail-color', 'rgb(255, 0, 0)');
+    await slide('touch');
+    await frames(2);
+    expect(painted().colour).toEqual([255, 0, 0]);
+  });
+
+  it('does not change what the gesture selects', async () => {
+    await slide('touch');
+    expect(path()[0]).not.toBe('-');
   });
 });
 

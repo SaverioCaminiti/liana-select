@@ -20,7 +20,9 @@ import {
   type NavState,
 } from './navigation';
 import {
+  ABSOLUTE_ANCHOR,
   anchoredScroll,
+  reachedExtreme,
   scrollRange,
   scrollToReveal,
   snapScroll,
@@ -651,6 +653,12 @@ export class LianaController {
     let index: number | null = null;
     if (metrics !== undefined && key === gesture.anchorKey) {
       const range = scrollRange(metrics);
+      // Once the pointer has moved to the first or the last item, the column
+      // follows the plain mapping: the way back is as smooth in both directions,
+      // and the same height always shows the same item.
+      if (reachedExtreme(gesture.y, range, gesture.anchor)) {
+        gesture.anchor = ABSOLUTE_ANCHOR;
+      }
       const scroll = snapScroll(
         anchoredScroll(gesture.y, range, gesture.anchor),
         range.max,

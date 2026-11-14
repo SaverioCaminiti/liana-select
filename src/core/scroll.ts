@@ -110,6 +110,30 @@ export function anchoredScroll(
 }
 
 /**
+ * The anchor that makes `anchoredScroll` the plain linear mapping from
+ * `(top, 0)` to `(bottom, max)`: the same pointer height always shows the same
+ * item, whatever happened before.
+ */
+export const ABSOLUTE_ANCHOR: ScrollAnchor = { y: 0, scroll: 0 };
+
+/**
+ * Whether the pointer, moving, has reached an extreme of the column: at or above
+ * `top` while going up from the anchor, or at or below `bottom` while going
+ * down. There the anchored offset is 0 or `max`, exactly as with the plain
+ * mapping, so switching to `ABSOLUTE_ANCHOR` causes no jump. The direction
+ * matters: a pointer that is beyond an extreme when it is anchored, and moves
+ * back towards the middle, has not reached it.
+ */
+export function reachedExtreme(
+  y: number,
+  range: ScrollRange,
+  anchor: ScrollAnchor,
+): boolean {
+  if (range.max <= 0) return false;
+  return (y <= range.top && y < anchor.y) || (y >= range.bottom && y > anchor.y);
+}
+
+/**
  * The closest offset to `scroll` that shows the whole item, used to reveal the
  * selected item of a column that nobody is pointing at.
  */

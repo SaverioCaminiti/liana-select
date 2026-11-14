@@ -3,6 +3,41 @@
 What changed in each release of `liana-select`, newest first. Version numbers
 follow [semantic versioning](https://semver.org/).
 
+## 1.4.0 - 2026-11-14
+
+### Added
+
+- A trail that fades behind the finger during a gesture, drawn on a canvas over
+  the columns. The `trail` attribute and property choose when: `touch` (default,
+  fingers and pens), `always` (the mouse too) or `none`. It is never drawn when
+  the user asks for reduced motion. `--liana-trail-color`,
+  `--liana-trail-width` and `--liana-trail-duration` change its look.
+- The trail on the documentation site: in the first example, in a dedicated
+  example, and styled in the styling example.
+
+### Changed
+
+- Vertical scrolling: once the pointer, moving, reaches the first or the last
+  item of an overflowing column, the column follows the plain mapping from top to
+  bottom. The way back is as smooth in both directions, and the same height
+  always shows the same item.
+
+### Fixed
+
+- A drag that started on the select and left it could select the text of the
+  page under the pointer. A press on the select never starts a text selection
+  now.
+
+### Known limitations
+
+- The element takes over every touch on it, so the page cannot be scrolled by
+  dragging on it.
+- In a long column, the first move from where the pointer pressed towards the
+  first or the last item can scroll fast.
+- The search by label looks in the column of the cursor only.
+- No right-to-left layout, and no transitions when columns appear or resize.
+- Not tried yet with every screen reader.
+
 ## 1.3.1 - 2026-11-14
 
 ### Changed

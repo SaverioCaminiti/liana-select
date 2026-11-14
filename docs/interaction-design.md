@@ -125,6 +125,20 @@ and last item, and `max` the maximum scroll offset:
   under the pointer. From there the offset is interpolated linearly, from
   `(top, 0)` to `(ya, sa)` above the anchor and from `(ya, sa)` to `(bottom, max)`
   below it.
+- Agreed with the owner: once the pointer, **moving**, reaches `top` or
+  `bottom`, the anchor is dropped and the column follows the plain mapping from
+  `(top, 0)` to `(bottom, max)` until the pointer leaves it. There the anchored
+  offset is already 0 or `max`, as with the plain mapping, so the switch causes
+  no jump. From then on the same height always shows the same item, at the same
+  speed in both directions. A press, or an entry into the column, beyond an
+  extreme does not count: only a move further towards it does.
+
+Known limit: the first move from the anchor towards an extreme can be fast. For
+example, with 40 items, the column scrolled to the bottom and a press near the
+top, the 33 items above are compressed into the few pixels between the pointer
+and the top. It happens at most once per column and gesture. A possible
+improvement, not built: cap the speed of the anchored mapping, and let the column
+scroll on its own over time while the pointer stays at an extreme.
 
 Known limit, accepted: the more a column overflows, the less pointer travel each
 item gets. Authors are expected to structure their trees so that columns do not
@@ -207,6 +221,8 @@ In the equal parts layout the columns never move, and none of this applies.
   left columns.
 - A press to the right of the last column counts as a press inside it, as for a
   move (step 6 of the gesture).
+- A press on the component never starts a text selection in the page, even when
+  the drag goes on outside it.
 - A value set from a script before its option exists is remembered, and applied
   when the option appears.
 - The `value` of a `<liana-option>` defaults to its label, as for `<option>`. The
@@ -259,6 +275,26 @@ from the `<label>` elements associated with it. Items are in column order, not
 in tree order: level and position are announced, and the focus is managed by
 the component.
 
+## Trail
+
+Agreed with the owner: during a gesture the component draws the path of the
+pointer, as a trail that fades out behind it. It is decoration only: it changes
+nothing about what is selected.
+
+- It is drawn on a canvas over the columns, which takes no pointer events and is
+  hidden from assistive technology. It is clipped at the border of the
+  component, even when the gesture goes on outside it.
+- It looks like a comet: in the accent colour, 6px wide at the pointer, thinner
+  and more transparent towards the tail. Each piece fades out 400ms after the
+  pointer passed there, so a still pointer leaves no trail.
+- The `trail` attribute chooses when it is drawn: `touch` (default) for fingers
+  and pens, `always` for the mouse too, `none` never. An unknown value means
+  `touch`.
+- It is never drawn when the user asks for reduced motion.
+- A new press starts a new trail, not joined to the previous one.
+- Where two pieces of the trail meet, only the newer one is painted, so the
+  semi-transparent tail shows no darker dots at the joints.
+
 ## Styling
 
 - `--liana-item-min-height` (default `2.75rem`) and `--liana-item-max-height`
@@ -271,6 +307,8 @@ the component.
   background), `--liana-highlight-text-color`
   (default: black or white, whichever contrasts more) and
   `--liana-selected-color` (default: a light tint of the accent).
+- `--liana-trail-color` (default: the accent), `--liana-trail-width` (default
+  `6px`) and `--liana-trail-duration` (default `400ms`).
 - `::part(column)` and `::part(item)`.
 
 ## Open questions

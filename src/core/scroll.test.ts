@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ABSOLUTE_ANCHOR,
   anchoredScroll,
   contentHeight,
+  reachedExtreme,
   scrollRange,
   scrollToReveal,
   snapScroll,
@@ -103,6 +105,44 @@ describe('anchoredScroll', () => {
     const tiny = scrollRange(column(30, [40, 40]));
     expect(tiny.bottom).toBeLessThan(tiny.top);
     expect(anchoredScroll(10, tiny, { y: 10, scroll: 20 })).toBe(20);
+  });
+});
+
+describe('reachedExtreme and ABSOLUTE_ANCHOR', () => {
+  it('is reached by moving to the first or last item, away from the anchor', () => {
+    const anchor = { y: 90, scroll: 250 };
+    expect(reachedExtreme(20, range, anchor)).toBe(true);
+    expect(reachedExtreme(10, range, anchor)).toBe(true);
+    expect(reachedExtreme(160, range, anchor)).toBe(true);
+    expect(reachedExtreme(21, range, anchor)).toBe(false);
+    expect(reachedExtreme(159, range, anchor)).toBe(false);
+  });
+
+  it('is not reached by moving back from an anchor beyond the extreme', () => {
+    expect(reachedExtreme(12, range, { y: 5, scroll: 250 })).toBe(false);
+    expect(reachedExtreme(3, range, { y: 5, scroll: 250 })).toBe(true);
+  });
+
+  it('is never reached when the column does not overflow', () => {
+    const fits = scrollRange(column(200, [50, 50]));
+    expect(reachedExtreme(0, fits, { y: 90, scroll: 0 })).toBe(false);
+  });
+
+  it('switches without a jump: the anchored offset is already 0 or max there', () => {
+    const anchor = { y: 90, scroll: 250 };
+    expect(anchoredScroll(20, range, anchor)).toBe(
+      anchoredScroll(20, range, ABSOLUTE_ANCHOR),
+    );
+    expect(anchoredScroll(160, range, anchor)).toBe(
+      anchoredScroll(160, range, ABSOLUTE_ANCHOR),
+    );
+  });
+
+  it('makes the anchored scroll the plain linear mapping', () => {
+    for (const y of [0, 20, 55, 90, 125, 160, 200]) {
+      const plain = (400 * (Math.min(Math.max(y, 20), 160) - 20)) / (160 - 20);
+      expect(anchoredScroll(y, range, ABSOLUTE_ANCHOR)).toBeCloseTo(plain);
+    }
   });
 });
 
