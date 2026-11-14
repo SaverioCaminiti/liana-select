@@ -80,6 +80,10 @@ changes an earlier choice. With the keyboard, Tab into it, move with the arrow
 keys and confirm with Enter; Escape restores the previous choice. For assistive
 technology it is a tree: name it with `aria-label` or a `<label for>`.
 
+On a touch screen it draws a short trail that fades behind the finger. Set
+`trail="always"` to show it for the mouse too, or `trail="none"` to turn it off.
+It is never drawn when the user asks for reduced motion.
+
 The element is a block, `20rem` tall by default: size it with CSS. It is meant to
 be large, and it takes over every touch on it, so the page cannot be scrolled by
 dragging on it.
@@ -96,6 +100,9 @@ dragging on it.
 | `--liana-highlight-color`            | half accent  | Background of the item under the pointer or the cursor |
 | `--liana-highlight-text-color`       | contrast     | Text of the item under the pointer or the cursor       |
 | `--liana-selected-color`             | light accent | Background of a selected item                          |
+| `--liana-trail-color`                | accent       | Colour of the trail                                    |
+| `--liana-trail-width`                | `6px`        | Width of the trail at the pointer                      |
+| `--liana-trail-duration`             | `400ms`      | How long a piece of the trail takes to fade out        |
 
 Columns and items are also exposed as `::part(column)` and `::part(item)`.
 
