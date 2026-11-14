@@ -44,7 +44,7 @@
         </p>
         <div class="example" data-plain>
           <div class="example-live">
-            <liana-select id="hero" class="tall" data-menu></liana-select>
+            <liana-select id="hero" class="tall" trail="always" data-menu></liana-select>
           </div>
         </div>
       </section>
@@ -409,10 +409,11 @@ select.addEventListener('change', () =&gt; console.log(select.value));</code></p
           <p>
             Size the element like any block. By default its colours come from the focus
             ring of the browser, so they match the other inputs of the page; one custom
-            property changes them all. Columns and items are exposed as parts.
+            property changes them all, and three more style the trail. Columns and items
+            are exposed as parts.
           </p>
           <div class="example-live">
-            <liana-select id="themed">
+            <liana-select id="themed" trail="always">
               <liana-group label="Pizza">
                 <liana-option value="margherita">Margherita</liana-option>
                 <liana-option value="marinara">Marinara</liana-option>
@@ -431,6 +432,9 @@ select.addEventListener('change', () =&gt; console.log(select.value));</code></p
               border-radius: 14px;
               --liana-item-min-height: 3.5rem;
               --liana-accent-color: #c25e00;
+              --liana-trail-color: #b26a00;
+              --liana-trail-width: 14px;
+              --liana-trail-duration: 900ms;
             }
 
             #themed::part(item) {
