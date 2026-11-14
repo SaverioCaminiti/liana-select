@@ -16,6 +16,7 @@ import {
   type TrailMode,
 } from '../core/index';
 import { contrastingText } from './contrast';
+import { drawTrail } from './draw-trail';
 import './liana-group';
 import './liana-option';
 import { readTree } from './read-tree';
@@ -755,18 +756,7 @@ export class LianaSelect extends LitElement {
     context.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
 
     const segments = this.#trail.segments(now);
-    context.lineCap = 'round';
-    context.strokeStyle = this.#trailColor;
-    for (const segment of segments) {
-      // Like a comet: thinner and more transparent towards the tail.
-      context.globalAlpha = segment.life;
-      context.lineWidth = this.#trailWidth * (0.25 + 0.75 * segment.life);
-      context.beginPath();
-      context.moveTo(segment.x1, segment.y1);
-      context.lineTo(segment.x2, segment.y2);
-      context.stroke();
-    }
-    context.globalAlpha = 1;
+    drawTrail(context, segments, this.#trailColor, this.#trailWidth);
 
     if (this.#trailDrawing || segments.length > 0) {
       this.#trailFrame = requestAnimationFrame(this.#drawTrail);

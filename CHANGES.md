@@ -14,6 +14,12 @@ follow [semantic versioning](https://semver.org/).
   `--liana-trail-width` and `--liana-trail-duration` change its look.
 - An example of the trail on the documentation site.
 
+### Fixed
+
+- A drag that started on the select and left it could select the text of the
+  page under the pointer. A press on the select never starts a text selection
+  now.
+
 ## 1.3.1 - 2026-11-14
 
 ### Changed
