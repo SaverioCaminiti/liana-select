@@ -42,11 +42,37 @@ package without anyone typing a password, and with provenance: npm records
 that the package was built by this repository's workflow.
 
 1. On npmjs.com, open the settings of the `liana-select` package and add a
-   trusted publisher: GitHub Actions, repository `SaverioCaminiti/liana-select`,
-   workflow file `publish.yml`.
-2. On GitHub, in the repository settings, under Secrets and variables, Actions,
-   Variables, add `NPM_TRUSTED_PUBLISHING` with the value `true`.
+   trusted publisher for GitHub Actions:
 
-Until then the workflow skips its job, so pushing a release tag does not fail.
-It can also be started by hand from the Actions tab, for example to publish a
-tag that was pushed before the setup.
+   | Field                | Value                                               |
+   | -------------------- | --------------------------------------------------- |
+   | Organization or user | `SaverioCaminiti`                                   |
+   | Repository           | `liana-select`                                      |
+   | Workflow filename    | `publish.yml`, the file name only                   |
+   | Environment name     | empty: the publish job uses no environment          |
+   | Allowed actions      | turn on `npm publish`; `npm dist-tag` is not needed |
+   | Label                | any name, for example `GitHub release workflow`     |
+
+   Since September 2026, a new trusted publisher allows only `npm stage publish`
+   unless `npm publish` is turned on, and the workflow uses `npm publish`. All the
+   fields are case-sensitive. npm does not check them when they are saved: a
+   mismatch shows up only at publication, as an authentication error (ENEEDAUTH).
+
+2. On GitHub, open Settings, Secrets and variables, Actions, and in the
+   **Variables** tab (not Secrets) add a repository variable named
+   `NPM_TRUSTED_PUBLISHING` with the value `true`. Direct link:
+   https://github.com/SaverioCaminiti/liana-select/settings/variables/actions
+
+**A new trusted publisher expires if it is not used within 2 days.** Configure it
+when the next release is ready, or make a release within 2 days. If it expires,
+delete it on npmjs.com and add it again; existing ones cannot be edited.
+
+Until the variable is set, the workflow skips its job, so pushing a release tag
+does not fail. It can also be started by hand from the Actions tab, for example
+to publish a tag that was pushed before the setup. It needs npm 11.5.1 or later
+and Node 22.14 or later, which the workflow installs.
+
+## Notes
+
+- npm may list a `0.0.0-stage` version, a placeholder it creates for staged
+  publishing. It is not the `latest` version, so nobody installs it by default.

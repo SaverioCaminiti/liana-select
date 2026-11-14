@@ -3,6 +3,13 @@
 What changed in each release of `liana-select`, newest first. Version numbers
 follow [semantic versioning](https://semver.org/).
 
+## Unreleased
+
+### Changed
+
+- The release guide, `docs/releasing.md`, describes every field of the npm
+  trusted publisher and its 2-day expiry, so releases can publish themselves.
+
 ## 1.3.0 - 2026-11-13
 
 ### Added
