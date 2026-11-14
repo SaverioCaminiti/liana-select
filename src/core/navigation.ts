@@ -221,10 +221,23 @@ export function goBack(state: NavState): NavState {
 }
 
 /**
+ * Whether `label` starts with `wanted`, ignoring case. Leading characters that
+ * are neither letters nor digits, such as an emoji or a bullet, are skipped, so
+ * that typing "p" finds "🍕 Pizza".
+ */
+function labelStartsWith(label: string, wanted: string): boolean {
+  const lower = label.toLocaleLowerCase();
+  return (
+    lower.startsWith(wanted) || lower.replace(/^[^\p{L}\p{N}]+/u, '').startsWith(wanted)
+  );
+}
+
+/**
  * Moves the cursor to the next enabled item of its column whose label starts
- * with `text`, ignoring case, wrapping around. A single character searches
- * after the cursor, so typing it again cycles through the items with that
- * initial; longer text searches from the cursor, so it refines the match.
+ * with `text`, ignoring case and any leading emoji, wrapping around. A single
+ * character searches after the cursor, so typing it again cycles through the
+ * items with that initial; longer text searches from the cursor, so it refines
+ * the match.
  */
 export function findByPrefix(
   roots: readonly TreeNode[],
@@ -239,7 +252,7 @@ export function findByPrefix(
     const index = (((start + step) % items.length) + items.length) % items.length;
     const node = items[index];
     if (node === undefined || !isEnabled(node)) continue;
-    if (node.label.toLocaleLowerCase().startsWith(wanted)) {
+    if (labelStartsWith(node.label, wanted)) {
       return { selected: state.selected, highlighted: index };
     }
   }

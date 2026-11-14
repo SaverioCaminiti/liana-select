@@ -7,6 +7,13 @@ follow [semantic versioning](https://semver.org/).
 
 ### Changed
 
+- The search by label skips a leading emoji or symbol: typing "p" finds
+  "🍕 Pizza".
+- The restaurant menu of the documentation site and of the demo is much richer:
+  Italian cuisine first, then pizza, Chinese, Japanese, drinks, and sides, with
+  4 to 6 groups each, 15 to 18 dishes per group, all in English and each with an
+  emoji.
+
 - The release guide, `docs/releasing.md`, describes every field of the npm
   trusted publisher and its 2-day expiry, so releases can publish themselves.
 
