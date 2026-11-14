@@ -40,3 +40,5 @@ export type {
   KeyboardAction,
 } from './controller';
 export { columnKey, DEFAULT_CONTROLLER_OPTIONS, LianaController } from './controller';
+export type { TrailMode, TrailSegment } from './trail';
+export { parseTrailMode, shouldDrawTrail, Trail, TRAIL_MODES } from './trail';
