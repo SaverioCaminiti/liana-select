@@ -144,6 +144,15 @@ describe('findByPrefix', () => {
     expect(findByPrefix(roots, state, 'mar').highlighted).toBe(1);
   });
 
+  it('skips a leading emoji or symbol in the labels', () => {
+    const decorated = [option('🍝 Pasta'), option('🍕 Pizza'), option('• Bread')];
+    expect(findByPrefix(decorated, EMPTY_NAV_STATE, 'p').highlighted).toBe(0);
+    expect(findByPrefix(decorated, EMPTY_NAV_STATE, 'piz').highlighted).toBe(1);
+    expect(findByPrefix(decorated, EMPTY_NAV_STATE, 'b').highlighted).toBe(2);
+    // Typing the emoji itself still works.
+    expect(findByPrefix(decorated, EMPTY_NAV_STATE, '🍕').highlighted).toBe(1);
+  });
+
   it('does nothing when no label matches', () => {
     const state: NavState = { selected: [], highlighted: 2 };
     expect(findByPrefix(roots, state, 'z')).toBe(state);

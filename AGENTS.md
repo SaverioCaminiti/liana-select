@@ -31,7 +31,6 @@ gesture. It must be usable in plain HTML and inside any framework.
 - TypeScript is pinned to 6.0 because `typescript-eslint` does not support 7.x yet.
 - Package layout: one package with two entry points, `liana-select` (registers the
   element) and `liana-select/core` (headless core). ESM only; Lit stays external.
-  The package is `private` until publishing is decided.
 
 - Interaction design: specified in `docs/interaction-design.md`. It is the owner's
   original design, not modelled on existing select components. Read it before
@@ -104,7 +103,7 @@ them.
 
 ## Current status
 
-Version 1.3.0 is released: the interaction designed in
+Version 1.3.1 is released: the interaction designed in
 `docs/interaction-design.md` is implemented, keyboard and ARIA included.
 
 - `src/core`: `tree.ts` (model), `navigation.ts` (selected path, highlight and
