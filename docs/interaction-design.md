@@ -259,6 +259,24 @@ from the `<label>` elements associated with it. Items are in column order, not
 in tree order: level and position are announced, and the focus is managed by
 the component.
 
+## Trail
+
+Agreed with the owner: during a gesture the component draws the path of the
+pointer, as a trail that fades out behind it. It is decoration only: it changes
+nothing about what is selected.
+
+- It is drawn on a canvas over the columns, which takes no pointer events and is
+  hidden from assistive technology. It is clipped at the border of the
+  component, even when the gesture goes on outside it.
+- It looks like a comet: in the accent colour, 6px wide at the pointer, thinner
+  and more transparent towards the tail. Each piece fades out 400ms after the
+  pointer passed there, so a still pointer leaves no trail.
+- The `trail` attribute chooses when it is drawn: `touch` (default) for fingers
+  and pens, `always` for the mouse too, `none` never. An unknown value means
+  `touch`.
+- It is never drawn when the user asks for reduced motion.
+- A new press starts a new trail, not joined to the previous one.
+
 ## Styling
 
 - `--liana-item-min-height` (default `2.75rem`) and `--liana-item-max-height`
@@ -271,6 +289,8 @@ the component.
   background), `--liana-highlight-text-color`
   (default: black or white, whichever contrasts more) and
   `--liana-selected-color` (default: a light tint of the accent).
+- `--liana-trail-color` (default: the accent), `--liana-trail-width` (default
+  `6px`) and `--liana-trail-duration` (default `400ms`).
 - `::part(column)` and `::part(item)`.
 
 ## Open questions

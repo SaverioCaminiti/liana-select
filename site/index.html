@@ -358,6 +358,26 @@ select.addEventListener('change', () =&gt; console.log(select.value));</code></p
           </div>
         </article>
 
+        <article class="example" id="example-trail">
+          <h3>A trail behind the finger</h3>
+          <p>
+            On a touch screen the select draws a short trail behind the finger, so the
+            path of the gesture is visible. By default it shows for fingers and pens only:
+            this one has <code>trail="always"</code>, so it follows the mouse too. It is
+            not drawn when the system asks for reduced motion.
+          </p>
+          <div class="example-live">
+            <liana-select id="trailed" trail="always" data-menu></liana-select>
+          </div>
+          <script type="text/plain" data-lang="css">
+            #trailed {
+              height: 22rem;
+              --liana-trail-width: 8px;
+              --liana-trail-duration: 600ms;
+            }
+          </script>
+        </article>
+
         <article class="example" id="example-keyboard">
           <h3>With the keyboard</h3>
           <p>
@@ -454,6 +474,16 @@ select.addEventListener('change', () =&gt; console.log(select.value));</code></p
                 <td><code>disabled</code></td>
                 <td>
                   Ignores the pointer and is not submitted, as for any form control.
+                </td>
+              </tr>
+              <tr>
+                <td><code>trail</code></td>
+                <td><code>trail</code></td>
+                <td>
+                  When to draw a fading trail behind the pointer during a gesture:
+                  <code>touch</code>, the default, for fingers and pens;
+                  <code>always</code>, for the mouse too; <code>none</code>. Never when
+                  the user asks for reduced motion.
                 </td>
               </tr>
               <tr>
@@ -674,6 +704,21 @@ select.addEventListener('change', () =&gt; console.log(select.value));</code></p
                 <td><code>--liana-selected-color</code></td>
                 <td>light accent</td>
                 <td>Background of a selected item.</td>
+              </tr>
+              <tr>
+                <td><code>--liana-trail-color</code></td>
+                <td>accent</td>
+                <td>Colour of the trail.</td>
+              </tr>
+              <tr>
+                <td><code>--liana-trail-width</code></td>
+                <td><code>6px</code></td>
+                <td>Width of the trail at the pointer; it thins towards the tail.</td>
+              </tr>
+              <tr>
+                <td><code>--liana-trail-duration</code></td>
+                <td><code>400ms</code></td>
+                <td>How long a piece of the trail takes to fade out.</td>
               </tr>
             </tbody>
           </table>

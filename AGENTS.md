@@ -109,9 +109,11 @@ Version 1.3.1 is released: the interaction designed in
 - `src/core`: `tree.ts` (model), `navigation.ts` (selected path, highlight and
   keyboard cursor),
   `scroll.ts` (anchored vertical scroll), `layout.ts` (column widths),
-  `hit-test.ts`, and `controller.ts` (`LianaController`, the state machine of the
-  gesture and of the keyboard, which composes them).
+  `hit-test.ts`, `controller.ts` (`LianaController`, the state machine of the
+  gesture and of the keyboard, which composes them), and `trail.ts` (the fading
+  trail of the pointer, without drawing).
 - `src/element`: `liana-select.ts` (form-associated Lit element: rendering, ARIA,
+  the trail canvas,
   pointer and key events, runtime colours), `contrast.ts`, the data elements
   `liana-group.ts` and `liana-option.ts`, and `read-tree.ts`.
 - `demo/`: a restaurant menu in several configurations, for development. Its

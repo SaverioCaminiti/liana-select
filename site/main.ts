@@ -68,16 +68,24 @@ function addReadout(select: LianaSelect): void {
   setInterval(refresh, 200);
 }
 
-for (const select of document.querySelectorAll<LianaSelect>('liana-select[data-menu]')) {
-  select.append(...buildChildren(menu));
-}
-
 for (const example of document.querySelectorAll<HTMLElement>('.example')) {
   const live = example.querySelector<HTMLElement>('.example-live');
   if (live === null) continue;
 
-  // Read the markup before anything adds to it.
-  const markup = dedent(live.innerHTML.replace(/=""/g, ''));
+  // Read the markup before anything adds to it. A select marked data-menu gets
+  // the long restaurant menu, which the code shows as a comment.
+  const markup = dedent(
+    live.innerHTML
+      .replace(/ data-menu=""/g, '')
+      .replace(/=""/g, '')
+      .replace(
+        /^([ \t]*)(<liana-select[^>]*>)(<\/liana-select>)/gm,
+        '$1$2\n$1  <!-- The restaurant menu: <liana-group> and <liana-option> elements -->\n$1$3',
+      ),
+  );
+  for (const select of live.querySelectorAll<LianaSelect>('liana-select[data-menu]')) {
+    select.append(...buildChildren(menu));
+  }
   const sources = Array.from(
     example.querySelectorAll<HTMLScriptElement>('script[type="text/plain"]'),
     (script) => ({

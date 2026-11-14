@@ -3,6 +3,17 @@
 What changed in each release of `liana-select`, newest first. Version numbers
 follow [semantic versioning](https://semver.org/).
 
+## Unreleased
+
+### Added
+
+- A trail that fades behind the finger during a gesture, drawn on a canvas over
+  the columns. The `trail` attribute and property choose when: `touch` (default,
+  fingers and pens), `always` (the mouse too) or `none`. It is never drawn when
+  the user asks for reduced motion. `--liana-trail-color`,
+  `--liana-trail-width` and `--liana-trail-duration` change its look.
+- An example of the trail on the documentation site.
+
 ## 1.3.1 - 2026-11-14
 
 ### Changed
